@@ -8,24 +8,26 @@ export type StoolConsistency =
   | "soft"
   | "loose"
   | "liquid"
-  | "blood";
+  | "blood"
+  | "constipation";
 
 export const STOOL_OPTIONS: { value: StoolConsistency; label: string }[] = [
-  { value: "formed", label: "Formed / Normal" },
+  { value: "formed", label: "No Issues" },
   { value: "soft", label: "Soft / Unformed" },
   { value: "loose", label: "Loose" },
   { value: "liquid", label: "Liquid / Diarrhoea" },
   { value: "blood", label: "Blood" },
+  { value: "constipation", label: "Constipation" },
 ];
 
 export const SYMPTOM_OPTIONS = [
+  "No Issues",
   "Squelching",
   "Lethargy",
   "Reduced Appetite",
   "Vomiting",
   "Pain or Suffering",
   "Eating Grass",
-  "None (Normal)",
 ] as const;
 
 export type Symptom = (typeof SYMPTOM_OPTIONS)[number];
@@ -108,8 +110,8 @@ export function emptyLog(date = todayKey()): DailyLog {
     log_date: date,
     health_score: 3,
     flare_up: false,
-    stool_consistency: null,
-    symptoms: [],
+    stool_consistency: "formed",
+    symptoms: ["No Issues"],
     medications: emptyMedications(),
     location: null,
     routine_type: null,
