@@ -12,6 +12,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import rosieLogo from "@/assets/rosie-icon.png";
+import { BottomNav } from "@/components/BottomNav";
 
 export const Route = createFileRoute("/history")({
   component: HistoryPage,
@@ -170,6 +171,7 @@ function HistoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BottomNav />
     </div>
   );
 }

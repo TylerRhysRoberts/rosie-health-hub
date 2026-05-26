@@ -11,6 +11,7 @@ import {
 } from "@/lib/daily-logs";
 import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
+import { BottomNav } from "@/components/BottomNav";
 import {
   LineChart,
   Line,
@@ -361,6 +362,7 @@ function InsightsPage() {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }
