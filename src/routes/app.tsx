@@ -17,9 +17,8 @@ import {
 
 export const Route = createFileRoute("/app")({
   component: LogPage,
-  validateSearch: (s: Record<string, unknown>) => ({
-    date: typeof s.date === "string" ? s.date : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { date?: string } =>
+    typeof s.date === "string" ? { date: s.date } : {},
   head: () => ({
     meta: [
       { title: "Rosie Health Hub — Log Today" },
