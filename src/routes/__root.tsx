@@ -52,7 +52,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="pb-[env(safe-area-inset-bottom)]">
+      <body className="h-[100dvh] overflow-hidden pb-[env(safe-area-inset-bottom)]">
         {children}
         <Scripts />
       </body>
@@ -63,7 +63,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <>
-      <div className="animate-page-enter">
+      <div className="animate-page-enter h-[100dvh] w-full overflow-hidden flex flex-col">
         <Outlet />
       </div>
       <Toaster position="top-center" />
