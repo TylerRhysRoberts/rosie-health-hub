@@ -120,7 +120,7 @@ function InsightsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-24">
+      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
         <div className="flex items-center justify-between animate-fade-up-blur">
           <div>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">

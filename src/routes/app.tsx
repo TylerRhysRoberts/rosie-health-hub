@@ -232,7 +232,7 @@ function LogPage() {
         flareAccent ? "bg-[oklch(0.97_0.04_25)]" : ""
       }`}
     >
-      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-24">
+      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
         <div className="flex items-start justify-between animate-fade-up-blur">
           <div className="flex items-center gap-3">
             <div>
