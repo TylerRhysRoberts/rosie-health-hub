@@ -124,7 +124,7 @@ export async function fetchLogByDate(userId: string, date: string): Promise<Dail
 }
 
 export async function upsertLog(userId: string, log: DailyLog): Promise<DailyLog> {
-  const payload = {
+  const payload: any = {
     user_id: userId,
     log_date: log.log_date,
     health_score: log.health_score,
