@@ -1,18 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X } from "lucide-react";
+import { Plus, Trash2, LogOut, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import rosieLogo from "@/assets/rosie-icon.png";
 import {
   DailyLog, HealthScore, SCORE_META, SYMPTOM_OPTIONS, MEDICATION_NAMES,
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
   STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
-  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog,
+  emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
 } from "@/lib/daily-logs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/app")({
   component: LogPage,
+  validateSearch: (s: Record<string, unknown>): { date?: string } =>
+    typeof s.date === "string" ? { date: s.date } : {},
   head: () => ({
     meta: [
       { title: "Rosie Health Hub — Log Today" },
@@ -21,10 +27,17 @@ export const Route = createFileRoute("/app")({
   }),
 });
 
+const PRIMARY_MEDS = ["Medrone", "Probiotic"] as const;
+const SECONDARY_MEDS = MEDICATION_NAMES.filter(
+  (n) => !(PRIMARY_MEDS as readonly string[]).includes(n),
+);
+const WALK_TARGET_MIN = 45;
+
 function LogPage() {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [date, setDate] = useState(todayKey());
+  const search = Route.useSearch();
+  const [date, setDate] = useState(search.date ?? todayKey());
   const [log, setLog] = useState<DailyLog>(emptyLog());
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -32,6 +45,13 @@ function LogPage() {
   const [customTreat, setCustomTreat] = useState("");
   const [customScavenged, setCustomScavenged] = useState("");
   const [customMed, setCustomMed] = useState("");
+  const [showMoreMeds, setShowMoreMeds] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (search.date && search.date !== date) setDate(search.date);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.date]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,8 +76,8 @@ function LogPage() {
     setLog((prev) => {
       const has = prev.symptoms.includes(s);
       let symptoms = has ? prev.symptoms.filter((x) => x !== s) : [...prev.symptoms, s];
-      if (!has && s === "None (Normal)") symptoms = ["None (Normal)"];
-      else if (!has) symptoms = symptoms.filter((x) => x !== "None (Normal)");
+      if (!has && s === "No Issues") symptoms = ["No Issues"];
+      else if (!has) symptoms = symptoms.filter((x) => x !== "No Issues");
       return { ...prev, symptoms };
     });
   };
@@ -69,7 +89,7 @@ function LogPage() {
       ...prev,
       symptoms: prev.symptoms.includes(v)
         ? prev.symptoms
-        : [...prev.symptoms.filter((x) => x !== "None (Normal)"), v],
+        : [...prev.symptoms.filter((x) => x !== "No Issues"), v],
     }));
     setCustomSymptom("");
   };
@@ -125,7 +145,7 @@ function LogPage() {
 
   const addWalk = () => {
     if (log.walks.length >= 3) return;
-    update("walks", [...log.walks, { hours: 0, minutes: 30, completed: false }]);
+    update("walks", [...log.walks, { hours: 0, minutes: 30 }]);
   };
   const setWalk = (i: number, partial: Partial<Walk>) => {
     const next = log.walks.slice();
@@ -155,17 +175,37 @@ function LogPage() {
     }
   };
 
-  const handleSave = async () => {
+  const persist = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      const saved = await upsertLog(user.id, log);
+      // Auto-derive walk completion from inputs
+      const walks = log.walks.map((w) => ({
+        ...w,
+        completed: (Number(w.hours) || 0) * 60 + (Number(w.minutes) || 0) > 0,
+      }));
+      const saved = await upsertLog(user.id, { ...log, walks });
       setLog(saved);
       toast.success("Log saved", { description: "Your daily entry has been recorded." });
     } catch (err: any) {
       toast.error("Save failed", { description: err.message });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const missingSections = () => {
+    const missing: string[] = [];
+    if (totalWalkMinutes(log.walks) === 0) missing.push("No walks logged");
+    if (!log.notes.trim()) missing.push("No notes added");
+    return missing;
+  };
+
+  const handleSave = () => {
+    if (missingSections().length > 0) {
+      setConfirmOpen(true);
+    } else {
+      persist();
     }
   };
 
@@ -178,6 +218,8 @@ function LogPage() {
   const customMedNames = Object.keys(log.medications).filter(
     (n) => !(MEDICATION_NAMES as readonly string[]).includes(n),
   );
+  const totalWalkMins = totalWalkMinutes(log.walks);
+  const targetHit = totalWalkMins >= WALK_TARGET_MIN;
 
   return (
     <div
@@ -300,20 +342,19 @@ function LogPage() {
           </Section>
 
           <Section label="Symptoms">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
                 const active = log.symptoms.includes(s);
                 return (
                   <button
                     key={s}
                     onClick={() => toggleSymptom(s)}
-                    className={`px-3.5 py-2 rounded-full text-sm font-medium border transition-all active:scale-95 ${
+                    className={`py-2.5 px-2 rounded-xl text-xs font-medium border transition-all active:scale-95 ${
                       active
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-card text-foreground border-border hover:border-primary/40"
                     }`}
                   >
-                    {active && <Check className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />}
                     {s}
                   </button>
                 );
@@ -324,9 +365,9 @@ function LogPage() {
                   <button
                     key={s}
                     onClick={() => toggleSymptom(s)}
-                    className="px-3.5 py-2 rounded-full text-sm font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center gap-1"
+                    className="py-2.5 px-2 rounded-xl text-xs font-medium border border-primary bg-primary text-primary-foreground active:scale-95 inline-flex items-center justify-center gap-1"
                   >
-                    <Check className="w-3.5 h-3.5" /> {s} <X className="w-3 h-3 ml-0.5 opacity-70" />
+                    {s} <X className="w-3 h-3 opacity-70" />
                   </button>
                 ))}
             </div>
@@ -398,7 +439,7 @@ function LogPage() {
           {/* 5. Care & activities */}
           <Section label="Medications">
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
-              {MEDICATION_NAMES.map((name) => {
+              {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
                 return (
                   <div key={name} className="flex items-center gap-3 px-4 py-3">
@@ -417,6 +458,33 @@ function LogPage() {
                   </div>
                 );
               })}
+              {showMoreMeds && SECONDARY_MEDS.map((name) => {
+                const med = log.medications[name];
+                return (
+                  <div key={name} className="flex items-center gap-3 px-4 py-3">
+                    <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+                    <select
+                      value={med.dosage}
+                      onChange={(e) => setMed(name, { dosage: e.target.value })}
+                      disabled={!med.taken}
+                      className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
+                    >
+                      {DOSAGE_OPTIONS.map((d) => (
+                        <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
+                      ))}
+                    </select>
+                    <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setShowMoreMeds((v) => !v)}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showMoreMeds ? "rotate-180" : ""}`} />
+                {showMoreMeds ? "Hide extra medications" : "Show more medications"}
+              </button>
               {customMedNames.map((name) => {
                 const med = log.medications[name];
                 return (
@@ -484,28 +552,44 @@ function LogPage() {
             </div>
           </Section>
 
-          <Section label="Walks" hint={`${log.walks.length}/3`}>
+          <Section
+            label="Walks"
+            hint={
+              <span className="flex items-center gap-2">
+                {targetHit && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[oklch(0.93_0.07_145)] border border-[oklch(0.72_0.16_145)] text-[oklch(0.4_0.12_145)] text-[10px] font-semibold uppercase tracking-wide">
+                    <Star className="w-3 h-3" /> Target Hit
+                  </span>
+                )}
+                <span className="text-[11px] text-muted-foreground tabular-nums">
+                  {totalWalkMins}/{WALK_TARGET_MIN}m · {log.walks.length}/3
+                </span>
+              </span>
+            }
+          >
             <div className="space-y-2">
-              {log.walks.map((w, i) => (
+              {log.walks.map((w, i) => {
+                const mins = (Number(w.hours) || 0) * 60 + (Number(w.minutes) || 0);
+                const done = mins > 0;
+                return (
                 <div
                   key={i}
                   className={`flex items-center gap-2 rounded-xl border p-3 transition-colors ${
-                    w.completed
+                    done
                       ? "bg-[oklch(0.95_0.06_145)] border-[oklch(0.72_0.16_145)]"
                       : "bg-card border-border"
                   }`}
                 >
-                  <button
-                    onClick={() => setWalk(i, { completed: !w.completed })}
-                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all active:scale-90 ${
-                      w.completed
+                  <span
+                    aria-label={done ? "Walk completed" : "Walk pending"}
+                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                      done
                         ? "bg-[oklch(0.65_0.18_145)] border-[oklch(0.65_0.18_145)] text-white"
                         : "border-border bg-card"
                     }`}
-                    aria-label={`Mark walk ${i + 1} completed`}
                   >
-                    {w.completed && <Check className="w-4 h-4" />}
-                  </button>
+                    {done && <Check className="w-4 h-4" />}
+                  </span>
                   <span className="text-xs font-semibold text-muted-foreground w-12">Walk {i + 1}</span>
                   <NumInput value={w.hours} onChange={(v) => setWalk(i, { hours: v })} max={12} suffix="h" />
                   <NumInput value={w.minutes} onChange={(v) => setWalk(i, { minutes: v })} max={59} suffix="m" />
@@ -513,7 +597,8 @@ function LogPage() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              ))}
+                );
+              })}
               {log.walks.length < 3 && (
                 <button
                   onClick={addWalk}
@@ -540,15 +625,40 @@ function LogPage() {
             disabled={saving}
             className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-md shadow-primary/20 active:scale-[0.98] disabled:opacity-60 transition-all"
           >
-            {saving ? "Saving…" : log.id ? "Update entry" : "Save entry"}
+            {saving ? "Saving…" : log.id ? "Update entry" : "Submit Entry"}
           </button>
         </div>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit incomplete entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to submit this entry? The following sections have not been filled in:
+              <ul className="mt-2 list-disc pl-5 text-foreground">
+                {missingSections().map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setConfirmOpen(false); persist(); }}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Confirm Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function Section({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Section({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="animate-fade-up-blur">
       <div className="flex items-baseline justify-between mb-2 px-1">

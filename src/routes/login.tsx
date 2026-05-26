@@ -32,7 +32,7 @@ function LoginPage() {
       if (result.error) {
         toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
       } else if (!result.redirected) {
-        navigate({ to: "/app" });
+        navigate({ to: "/app", search: {} });
       }
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
@@ -62,7 +62,7 @@ function LoginPage() {
           password,
         });
         if (error) throw error;
-        navigate({ to: "/app" });
+        navigate({ to: "/app", search: {} });
       }
     } catch (err: any) {
       toast.error(err.message || "Authentication failed");
