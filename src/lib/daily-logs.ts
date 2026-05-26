@@ -26,7 +26,6 @@ export const SYMPTOM_OPTIONS = [
   "Lethargy",
   "Reduced Appetite",
   "Vomiting",
-  "Pain or Suffering",
   "Eating Grass",
 ] as const;
 
