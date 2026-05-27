@@ -31,8 +31,8 @@ export const Route = createFileRoute("/medications")({
 });
 
 const SHORT_DOSAGE: Record<DosageSize, string> = {
-  whole: "Whole",
-  half: "Half",
+  whole: "1",
+  half: "1/2",
   third: "1/3",
   quarter: "1/4",
   eighth: "1/8",
