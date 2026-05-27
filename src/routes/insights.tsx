@@ -104,17 +104,31 @@ function InsightsPage() {
   }
 
   // Build chronological walk-duration data (one point per day in range)
-  const walkTrend: { date: string; label: string; minutes: number | null; healthScore: number | null }[] = [];
+  const walkTrend: {
+    date: string;
+    label: string;
+    minutes: number | null;
+    healthScore: number | null;
+    flare: DailyLog["flare_event"] | null;
+    rescueMeds: string[];
+  }[] = [];
   for (let i = rangeDays - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split("T")[0];
     const match = ranged.find((l) => l.log_date === key);
+    const rescueMeds = match
+      ? Object.entries(match.medications)
+          .filter(([, m]) => m.taken && m.is_rescue)
+          .map(([n, m]) => `${n} (${m.dosage})`)
+      : [];
     walkTrend.push({
       date: key,
       label: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
       minutes: match ? totalWalkMinutes(match.walks) : null,
       healthScore: match ? match.health_score : null,
+      flare: match?.flare_event?.had_flareup ? match.flare_event : null,
+      rescueMeds,
     });
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
