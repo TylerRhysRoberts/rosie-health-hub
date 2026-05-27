@@ -89,6 +89,18 @@ function LogPage() {
     });
   };
 
+  const toggleStool = (s: string) => {
+    setLog((prev) => {
+      const has = prev.stool_consistency.includes(s);
+      let next = has
+        ? prev.stool_consistency.filter((x) => x !== s)
+        : [...prev.stool_consistency, s];
+      if (!has && s === "formed") next = ["formed"];
+      else if (!has) next = next.filter((x) => x !== "formed");
+      return { ...prev, stool_consistency: next };
+    });
+  };
+
   const addCustomSymptom = () => {
     const v = customSymptom.trim();
     if (!v) return;
