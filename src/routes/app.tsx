@@ -10,6 +10,7 @@ import {
   LOCATION_OPTIONS, DOSAGE_OPTIONS, DOSAGE_LABELS, Walk,
   STOOL_OPTIONS, StoolConsistency, DEFAULT_TREATS, DEFAULT_SCAVENGED,
   emptyLog, todayKey, fetchLogByDate, fetchPreviousLog, upsertLog, totalWalkMinutes,
+  FLARE_SYMPTOM_OPTIONS, EMPTY_FLARE_EVENT, FlareEvent,
 } from "@/lib/daily-logs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -114,7 +115,7 @@ function LogPage() {
     reset();
   };
 
-  const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string }>) => {
+  const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => {
     setLog((prev) => ({
       ...prev,
       medications: {
@@ -130,7 +131,7 @@ function LogPage() {
     setLog((prev) =>
       prev.medications[v]
         ? prev
-        : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole" } } },
+        : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole", is_rescue: false } } },
     );
     setCustomMed("");
   };
@@ -141,6 +142,26 @@ function LogPage() {
       const next = { ...prev.medications };
       delete next[name];
       return { ...prev, medications: next };
+    });
+  };
+
+  const updateFlare = (partial: Partial<FlareEvent>) => {
+    setLog((prev) => ({
+      ...prev,
+      flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), ...partial },
+    }));
+  };
+  const toggleFlareSymptom = (s: string) => {
+    setLog((prev) => {
+      const fe = prev.flare_event ?? EMPTY_FLARE_EVENT;
+      const has = fe.symptoms.includes(s);
+      return {
+        ...prev,
+        flare_event: {
+          ...fe,
+          symptoms: has ? fe.symptoms.filter((x) => x !== s) : [...fe.symptoms, s],
+        },
+      };
     });
   };
 
