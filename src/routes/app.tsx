@@ -34,6 +34,7 @@ const TIME_OPTIONS: string[] = Array.from({ length: 96 }, (_, i) => {
   const m = String((i % 4) * 15).padStart(2, "0");
   return `${h}:${m}`;
 });
+const PRIMARY_MEDS = ["Medrone", "Probiotic"] as const;
 const SECONDARY_MEDS = MEDICATION_NAMES.filter(
   (n) => !(PRIMARY_MEDS as readonly string[]).includes(n),
 );
