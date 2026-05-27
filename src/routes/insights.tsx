@@ -361,13 +361,7 @@ function InsightsPage() {
                         border: "1px solid oklch(0.9 0.01 80)",
                         fontSize: 12,
                       }}
-                      formatter={(v: any, name: any) => {
-                        if (name === "healthScore") {
-                          if (v == null) return ["No log", "Health"];
-                          return [v === 1 ? "Poor" : v === 2 ? "Neutral" : "Good", "Health"];
-                        }
-                        return v === null ? ["No log", "Walks"] : [`${v} min`, "Total walks"];
-                      }}
+                      content={<WalkTooltip />}
                     />
                     <ReferenceLine
                       y={45}
