@@ -225,10 +225,12 @@ function CapsuleTrack({
   days,
   doses,
   trackRef,
+  onSync,
 }: {
   days: string[];
   doses: Record<string, DosageSize>;
   trackRef: (el: HTMLDivElement | null) => void;
+  onSync?: (source: HTMLDivElement) => void;
 }) {
   const localRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{ active: boolean; startX: number; startScroll: number }>({
@@ -253,6 +255,7 @@ function CapsuleTrack({
     e.preventDefault();
     const walk = e.pageX - dragState.current.startX;
     localRef.current.scrollLeft = dragState.current.startScroll - walk;
+    onSync?.(localRef.current);
   };
 
   return (
@@ -265,6 +268,7 @@ function CapsuleTrack({
       onMouseLeave={endDrag}
       onMouseUp={endDrag}
       onMouseMove={handleMouseMove}
+      onScroll={(e) => onSync?.(e.currentTarget)}
       className="flex flex-row overflow-x-auto gap-4 pb-2 w-full touch-pan-x cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {days.map((d) => {
