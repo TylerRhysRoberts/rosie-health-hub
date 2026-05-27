@@ -46,6 +46,16 @@ const DOSAGE_DECIMAL: Record<DosageSize, number> = {
   eighth: 0.125,
 };
 
+const DOSAGE_FILL_PCT: Record<DosageSize, number> = {
+  whole: 100,
+  half: 50,
+  third: 33,
+  quarter: 25,
+  eighth: 12,
+};
+
+const WINDOW_DAYS = 14;
+
 function dateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -75,7 +85,8 @@ function MedicationsPage() {
     const arr: string[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    for (let i = rangeDays - 1; i >= 0; i--) {
+    const span = rangeDays === 7 ? WINDOW_DAYS : rangeDays;
+    for (let i = span - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       arr.push(dateKey(d));
@@ -105,11 +116,13 @@ function MedicationsPage() {
       .map(([name, count]) => ({ name, count, days: perDay[name] || {} }));
   }, [logs, daySet]);
 
-  // Pin most recent (right) into view for 7-day capsule track on render / range change.
   useEffect(() => {
     if (rangeDays !== 7) return;
-    Object.values(trackRefs.current).forEach((el) => {
-      if (el) el.scrollLeft = el.scrollWidth;
+    // Pin to far right (Today) on render / range change.
+    requestAnimationFrame(() => {
+      Object.values(trackRefs.current).forEach((el) => {
+        if (el) el.scrollLeft = el.scrollWidth;
+      });
     });
   }, [rangeDays, meds.length, mounted]);
 
@@ -210,33 +223,38 @@ function CapsuleTrack({
   return (
     <div
       ref={trackRef}
-      className="overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex flex-row overflow-x-auto gap-3 pb-2 touch-pan-x cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div
-        className="grid gap-1"
-        style={{
-          gridTemplateColumns: `repeat(${days.length}, minmax(36px, 1fr))`,
-          minWidth: days.length > 7 ? `${days.length * 40}px` : undefined,
-        }}
-      >
-        {days.map((d) => {
-          const dose = doses[d];
-          const taken = !!dose;
-          return (
+      {days.map((d) => {
+        const dose = doses[d];
+        const taken = !!dose;
+        const pct = taken ? DOSAGE_FILL_PCT[dose] : 0;
+        const [, mm, dd] = d.split("-");
+        const stamp = `${parseInt(dd, 10)}/${parseInt(mm, 10)}`;
+        return (
+          <div key={d} className="flex flex-col items-center shrink-0">
             <div
-              key={d}
               title={`${d}${dose ? ` · ${DOSAGE_LABELS[dose]}` : ""}`}
-              className={`aspect-[1/2.4] rounded-full flex items-center justify-center text-[9px] font-semibold leading-none px-0.5 ${
-                taken
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/60 border border-border text-transparent"
-              }`}
+              className="relative h-20 w-7 rounded-full overflow-hidden bg-muted/60 border border-border"
             >
-              <span className="text-center">{taken ? SHORT_DOSAGE[dose] : ""}</span>
+              {taken && (
+                <div
+                  className="absolute inset-x-0 bottom-0 bg-primary"
+                  style={{ height: `${pct}%` }}
+                />
+              )}
+              {taken && (
+                <span className="absolute inset-x-0 bottom-1 text-center text-[8px] font-semibold leading-none text-primary-foreground">
+                  {SHORT_DOSAGE[dose]}
+                </span>
+              )}
             </div>
-          );
-        })}
-      </div>
+            <span className="mt-1 text-[9px] text-muted-foreground tabular-nums">
+              {stamp}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -289,7 +307,7 @@ function DoseTrendChart({
             dataKey="dose"
             stroke="oklch(0.72 0.16 0)"
             strokeWidth={2.5}
-            dot={{ r: 2.5, fill: "oklch(0.72 0.16 0)" }}
+            dot={false}
           />
         </LineChart>
       </ResponsiveContainer>
