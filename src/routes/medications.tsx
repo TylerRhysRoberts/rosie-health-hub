@@ -19,8 +19,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Scatter,
-  ComposedChart,
 } from "recharts";
 
 export const Route = createFileRoute("/medications")({
