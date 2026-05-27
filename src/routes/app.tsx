@@ -116,13 +116,43 @@ function LogPage() {
   };
 
   const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => {
-    setLog((prev) => ({
-      ...prev,
-      medications: {
+    setLog((prev) => {
+      const nextMeds = {
         ...prev.medications,
         [name]: { ...prev.medications[name], ...partial } as any,
-      },
-    }));
+      };
+      // If taken is being unset, also clear rescue flag.
+      if (partial.taken === false) {
+        nextMeds[name] = { ...nextMeds[name], is_rescue: false };
+      }
+      const prevRescueCount = Object.values(prev.medications).filter(
+        (m) => m.taken && m.is_rescue,
+      ).length;
+      const rescueNames = Object.entries(nextMeds)
+        .filter(([, m]: [string, any]) => m.taken && m.is_rescue)
+        .map(([n]) => n);
+      const anyRescue = rescueNames.length > 0;
+      const prevFlare = prev.flare_event ?? EMPTY_FLARE_EVENT;
+
+      let flare_up = prev.flare_up;
+      let flare_event = prevFlare;
+
+      if (anyRescue) {
+        // Activating any rescue dose → ensure flare is ON and intervention reflects all rescues.
+        flare_up = true;
+        flare_event = {
+          ...prevFlare,
+          had_flareup: true,
+          intervention_med: rescueNames.join(", "),
+        };
+      } else if (prevRescueCount > 0) {
+        // Last rescue dose just removed → clear flare entirely.
+        flare_up = false;
+        flare_event = { ...EMPTY_FLARE_EVENT };
+      }
+
+      return { ...prev, medications: nextMeds, flare_up, flare_event };
+    });
   };
 
   const addCustomMed = () => {
@@ -161,6 +191,29 @@ function LogPage() {
           ...fe,
           symptoms: has ? fe.symptoms.filter((x) => x !== s) : [...fe.symptoms, s],
         },
+      };
+    });
+  };
+
+  // Toggle the flare flag, keeping medications in sync.
+  // Turning flare OFF clears all rescue-dose flags (a rescue only exists in response to a flare).
+  const setFlareOn = (next: boolean) => {
+    setLog((prev) => {
+      if (next) {
+        return {
+          ...prev,
+          flare_up: true,
+          flare_event: { ...(prev.flare_event ?? EMPTY_FLARE_EVENT), had_flareup: true },
+        };
+      }
+      const clearedMeds = Object.fromEntries(
+        Object.entries(prev.medications).map(([n, m]) => [n, { ...m, is_rescue: false }]),
+      );
+      return {
+        ...prev,
+        flare_up: false,
+        flare_event: { ...EMPTY_FLARE_EVENT },
+        medications: clearedMeds as typeof prev.medications,
       };
     });
   };
