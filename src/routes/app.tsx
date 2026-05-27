@@ -495,6 +495,7 @@ function LogPage() {
             )}
           </Section>
 
+          {!log.holiday_mode && (
           <Section label="Overall Health Score">
             <div className="grid grid-cols-3 gap-3">
               {([1, 2, 3] as HealthScore[]).map((s) => {
@@ -518,8 +519,10 @@ function LogPage() {
               })}
             </div>
           </Section>
+          )}
 
           {/* 3. Clinical observations */}
+          {!log.holiday_mode && (
           <Section label="Stool Consistency">
             <div className="grid grid-cols-3 gap-2">
               {STOOL_OPTIONS.map((opt) => {
@@ -540,7 +543,9 @@ function LogPage() {
               })}
             </div>
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section label="Symptoms">
             <div className="grid grid-cols-3 gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
@@ -578,12 +583,16 @@ function LogPage() {
               placeholder="Add custom symptom…"
             />
           </Section>
+          )}
 
           {/* 4. Dietary inputs */}
+          {!log.holiday_mode && (
           <Section label="% of Dins" hint={`${log.dins_percent}%`}>
             <DinsSlider value={log.dins_percent} onChange={(v) => update("dins_percent", v)} />
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section label="Treats">
             <div className="flex flex-wrap gap-2">
               {DEFAULT_TREATS.map((t) => {
@@ -609,7 +618,9 @@ function LogPage() {
               placeholder="Add custom treat…"
             />
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section label="Scavenged / Additional Food">
             <div className="flex flex-wrap gap-2">
               {DEFAULT_SCAVENGED.map((t) => {
@@ -635,6 +646,7 @@ function LogPage() {
               placeholder="Add custom item…"
             />
           </Section>
+          )}
 
           {/* 5. Care & activities */}
           <Section label="Medications">
@@ -693,6 +705,7 @@ function LogPage() {
             </select>
           </Section>
 
+          {!log.holiday_mode && (
           <Section label="Routine Type">
             <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
               {(["routine", "non_routine"] as const).map((r) => {
@@ -711,7 +724,9 @@ function LogPage() {
               })}
             </div>
           </Section>
+          )}
 
+          {!log.holiday_mode && (
           <Section
             label="Walks"
             hint={
@@ -769,6 +784,7 @@ function LogPage() {
               )}
             </div>
           </Section>
+          )}
 
           <Section label="Notes">
             <textarea
