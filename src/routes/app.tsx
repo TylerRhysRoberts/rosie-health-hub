@@ -852,6 +852,59 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
   );
 }
 
+function MedRow({
+  name,
+  med,
+  setMed,
+  onRemove,
+}: {
+  name: string;
+  med: { taken: boolean; dosage: string; is_rescue?: boolean };
+  setMed: (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => void;
+  onRemove?: () => void;
+}) {
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+        <select
+          value={med.dosage}
+          onChange={(e) => setMed(name, { dosage: e.target.value })}
+          disabled={!med.taken}
+          className="bg-muted text-foreground text-sm rounded-lg px-2.5 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40"
+        >
+          {DOSAGE_OPTIONS.map((d) => (
+            <option key={d} value={d}>{DOSAGE_LABELS[d]}</option>
+          ))}
+        </select>
+        <Toggle on={med.taken} onChange={(v) => setMed(name, { taken: v })} />
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="text-muted-foreground hover:text-destructive p-1 rounded active:scale-90"
+            aria-label={`Remove ${name}`}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      {med.taken && (
+        <label className="mt-2 flex items-center justify-end gap-2 cursor-pointer select-none">
+          <span className={`text-[11px] font-semibold uppercase tracking-wider ${med.is_rescue ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}>
+            Rescue dose
+          </span>
+          <input
+            type="checkbox"
+            checked={!!med.is_rescue}
+            onChange={(e) => setMed(name, { is_rescue: e.target.checked })}
+            className="w-4 h-4 rounded border-border accent-[oklch(0.58_0.20_25)]"
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 function NumInput({ value, onChange, max, suffix }: { value: number; onChange: (v: number) => void; max: number; suffix: string }) {
   return (
     <div className="flex-1 flex items-center gap-1 bg-muted rounded-lg px-2.5 py-1.5">
