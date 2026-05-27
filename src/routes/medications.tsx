@@ -112,14 +112,14 @@ function MedicationsPage() {
   // and per-day dosage info within active range.
   const meds = useMemo(() => {
     const totals: Record<string, number> = {};
-    const perDay: Record<string, Record<string, DosageSize>> = {};
+    const perDay: Record<string, Record<string, { dosage: DosageSize; is_rescue: boolean }>> = {};
     for (const log of logs) {
       for (const [name, m] of Object.entries(log.medications || {})) {
         if (!m?.taken) continue;
         totals[name] = (totals[name] || 0) + 1;
         if (daySet.has(log.log_date)) {
           if (!perDay[name]) perDay[name] = {};
-          perDay[name][log.log_date] = m.dosage;
+          perDay[name][log.log_date] = { dosage: m.dosage, is_rescue: !!m.is_rescue };
         }
       }
     }
@@ -132,6 +132,16 @@ function MedicationsPage() {
     const map: Record<string, number> = {};
     for (const log of logs) {
       if (daySet.has(log.log_date)) map[log.log_date] = log.health_score;
+    }
+    return map;
+  }, [logs, daySet]);
+
+  const flareByDate = useMemo(() => {
+    const map: Record<string, FlareEvent> = {};
+    for (const log of logs) {
+      if (daySet.has(log.log_date) && log.flare_event?.had_flareup) {
+        map[log.log_date] = log.flare_event;
+      }
     }
     return map;
   }, [logs, daySet]);
