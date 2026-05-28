@@ -539,6 +539,21 @@ function HealthDotTick(props: any) {
   return <circle cx={(x ?? 0) + 6} cy={y ?? 0} r={4} fill={fill} />;
 }
 
+function computeHolidaySegments(data: Array<{ holiday: boolean }>): Array<{ start: number; end: number }> {
+  const out: Array<{ start: number; end: number }> = [];
+  let start: number | null = null;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i].holiday) {
+      if (start === null) start = i;
+    } else if (start !== null) {
+      out.push({ start, end: i - 1 });
+      start = null;
+    }
+  }
+  if (start !== null) out.push({ start, end: data.length - 1 });
+  return out;
+}
+
 function EmptyState() {
   return (
     <div className="border-2 border-dashed border-border rounded-2xl py-16 px-6 text-center mt-6">
