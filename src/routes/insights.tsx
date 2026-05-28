@@ -493,6 +493,17 @@ function InsightsPage() {
 }
 
 function MiniStat({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
+  return MiniStatImpl({ icon: Icon, label, value, sub });
+}
+
+function HealthDotTick(props: any) {
+  const { x, y, payload } = props;
+  const colors: Record<number, string> = { 1: "#ef4444", 2: "#eab308", 3: "#22c55e" };
+  const fill = colors[payload?.value] ?? "transparent";
+  return <circle cx={(x ?? 0) + 6} cy={y ?? 0} r={4} fill={fill} />;
+}
+
+function MiniStatImpl({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-2xl bg-card border border-border p-4">
       <Icon className="w-4 h-4 text-primary mb-2" />
