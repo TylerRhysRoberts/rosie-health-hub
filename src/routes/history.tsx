@@ -100,7 +100,9 @@ function HistoryPage() {
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
             </button>
-            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+              <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            </Link>
           </div>
         </div>
 
