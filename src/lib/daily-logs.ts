@@ -39,6 +39,7 @@ export const MEDICATION_NAMES = [
   "Buscopan",
   "Flea Meds",
   "Worming Meds",
+  "Vaccination",
 ] as const;
 
 export type MedicationName = (typeof MEDICATION_NAMES)[number];
@@ -136,6 +137,7 @@ export function emptyMedications(): Record<string, Medication> {
     Buscopan: "whole",
     "Flea Meds": "whole",
     "Worming Meds": "whole",
+    Vaccination: "whole",
   };
   for (const name of MEDICATION_NAMES)
     out[name] = { taken: false, dosage: defaults[name] ?? "whole", is_rescue: false };

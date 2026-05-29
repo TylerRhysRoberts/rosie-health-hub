@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -203,7 +203,9 @@ function InsightsPage() {
             </p>
             <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Insights</h1>
           </div>
-          <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          </Link>
         </div>
 
         {/* Global time-range toggle */}
