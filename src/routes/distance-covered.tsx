@@ -183,17 +183,17 @@ function DistanceCoveredPage() {
             <span>{currentMilestone.miles} mi</span>
             <span>{nextMilestone ? `${nextMilestone.miles} mi` : "Max!"}</span>
           </div>
-          <div className="relative mt-2 h-4 rounded-full bg-muted overflow-hidden">
+          <div className="relative mt-2 h-4 rounded-full bg-muted">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-[oklch(0.75_0.15_220)] to-[oklch(0.72_0.16_145)] rounded-full transition-all duration-700"
               style={{ width: `${progressPct}%` }}
             />
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-8 w-8 rounded-full bg-card border-2 border-primary shadow-md flex items-center justify-center text-base transition-all duration-700"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-8 w-8 rounded-full bg-card border-2 border-primary shadow-md flex items-center justify-center text-base transition-all duration-700 overflow-hidden"
               style={{ left: `${progressPct}%` }}
               aria-label="Rosie's position"
             >
-              🐕
+              <img src={rosieLogo} alt="Rosie" className="h-full w-full object-cover" />
             </div>
           </div>
 
