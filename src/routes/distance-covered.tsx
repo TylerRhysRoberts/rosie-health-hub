@@ -147,7 +147,7 @@ function DistanceCoveredPage() {
   }
 
   const activeLocation = pickLocation(currentMilestone.miles, year);
-  const nextLocation = nextMilestone ? pickLocation(nextMilestone.miles, year) : null;
+  const remainingMinutes = nextMilestone ? Math.ceil(((nextMilestone.miles - totalMiles) * 60) / 2.5) : 0;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-[oklch(0.97_0.04_220)] via-background to-[oklch(0.97_0.04_145)]">
