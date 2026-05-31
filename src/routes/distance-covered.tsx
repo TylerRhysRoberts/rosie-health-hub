@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/BottomNav";
@@ -67,6 +67,14 @@ function pickLocation(miles: number, year: number): string {
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (m === 0) return `${h} hour${h === 1 ? "" : "s"}`;
+  return `${h} hour${h === 1 ? "" : "s"} and ${m} minute${m === 1 ? "" : "s"}`;
 }
 
 function exploreUrl(name: string): string {
@@ -139,7 +147,7 @@ function DistanceCoveredPage() {
   }
 
   const activeLocation = pickLocation(currentMilestone.miles, year);
-  const nextLocation = nextMilestone ? pickLocation(nextMilestone.miles, year) : null;
+  const remainingMinutes = nextMilestone ? Math.ceil(((nextMilestone.miles - totalMiles) * 60) / 2.5) : 0;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-[oklch(0.97_0.04_220)] via-background to-[oklch(0.97_0.04_145)]">
@@ -150,7 +158,9 @@ function DistanceCoveredPage() {
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Easter Egg</p>
             <h1 className="text-2xl font-semibold text-foreground mt-1 tracking-tight">Where Has Rosie Been?</h1>
           </div>
-          <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          <Link to="/profile">
+            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+          </Link>
         </div>
 
         {/* Summary card */}
@@ -160,9 +170,9 @@ function DistanceCoveredPage() {
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">{formatDate(now)}</p>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
-            So far this year, you and Rosie have accumulated{" "}
-            <span className="font-bold text-[oklch(0.45_0.18_220)]">{totalMinutes.toLocaleString()} minutes</span>{" "}
-            of walking, covering a total calculated distance of{" "}
+            So far this year, you and Rosie have walked{" "}
+            <span className="font-bold text-[oklch(0.45_0.18_220)]">{formatDuration(totalMinutes)}</span>
+            , covering a total calculated distance of{" "}
             <span className="font-bold text-[oklch(0.45_0.18_145)]">{totalMiles.toFixed(2)} miles</span>!
           </p>
         </div>
@@ -173,17 +183,17 @@ function DistanceCoveredPage() {
             <span>{currentMilestone.miles} mi</span>
             <span>{nextMilestone ? `${nextMilestone.miles} mi` : "Max!"}</span>
           </div>
-          <div className="relative mt-2 h-4 rounded-full bg-muted overflow-hidden">
+          <div className="relative mt-2 h-4 rounded-full bg-muted">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-[oklch(0.75_0.15_220)] to-[oklch(0.72_0.16_145)] rounded-full transition-all duration-700"
               style={{ width: `${progressPct}%` }}
             />
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-8 w-8 rounded-full bg-card border-2 border-primary shadow-md flex items-center justify-center text-base transition-all duration-700"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-8 w-8 rounded-full bg-card border-2 border-primary shadow-md flex items-center justify-center text-base transition-all duration-700 overflow-hidden"
               style={{ left: `${progressPct}%` }}
               aria-label="Rosie's position"
             >
-              🐕
+              <img src={rosieLogo} alt="Rosie" className="h-full w-full object-cover" />
             </div>
           </div>
 
@@ -207,7 +217,7 @@ function DistanceCoveredPage() {
 
           {nextMilestone && (
             <p className="mt-3 text-xs text-muted-foreground text-center">
-              Next stop at <strong className="text-foreground">{nextMilestone.miles} mi</strong>: {nextLocation}
+              Walk <strong className="text-foreground">{remainingMinutes} more minutes</strong> to reach the next mystery location!
             </p>
           )}
         </div>
