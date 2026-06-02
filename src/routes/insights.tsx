@@ -240,7 +240,7 @@ function InsightsPage() {
             <Link
               to="/distance-covered"
               aria-label="Where has Rosie been?"
-              className="text-xl active:scale-95 transition-transform"
+              className="h-12 w-12 rounded-full flex items-center justify-center text-3xl leading-none active:scale-95 transition-transform"
             >
               🌍
             </Link>
@@ -309,7 +309,7 @@ function InsightsPage() {
               <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                 <p className="text-[11px] text-muted-foreground">Average Flare-Up Duration</p>
                 <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
-                  {avgFlareDuration === null ? "—" : `${avgFlareDuration} min`}
+                  {avgFlareDuration === null ? "—" : formatFlareDuration(avgFlareDuration)}
                 </p>
               </div>
             </div>
@@ -449,6 +449,7 @@ function InsightsPage() {
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
                       interval="preserveStartEnd"
                       minTickGap={20}
+                      tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
                     />
                     <YAxis
                       domain={[1, 3]}
@@ -508,6 +509,7 @@ function InsightsPage() {
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
                     />
                     <YAxis
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
@@ -590,11 +592,15 @@ function InsightsPage() {
                       strokeWidth={1.5}
                       strokeDasharray="4 4"
                     />
-                    <Bar dataKey="minutes" radius={[6, 6, 0, 0]}>
-                      {dowData.map((d, i) => (
-                        <Cell key={i} fill={dowColor(d.minutes)} />
-                      ))}
-                    </Bar>
+                    <defs>
+                      <linearGradient id="dowBarGradient" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stopColor="#EF4444" />
+                        <stop offset="40%" stopColor="#F59E0B" />
+                        <stop offset="75%" stopColor="#10B981" />
+                        <stop offset="100%" stopColor="#047857" />
+                      </linearGradient>
+                    </defs>
+                    <Bar dataKey="minutes" radius={[6, 6, 0, 0]} fill="url(#dowBarGradient)" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -650,6 +656,20 @@ function EmptyState() {
       </p>
     </div>
   );
+}
+
+function formatFlareDuration(mins: number): string {
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h} hour${h === 1 ? "" : "s"} and ${m} minute${m === 1 ? "" : "s"}`;
+}
+
+function oddWeekFormatter(label: string, rangeDays: 7 | 30 | 90): string {
+  if (rangeDays !== 90) return label;
+  const match = /^Wk\s+(\d+)/.exec(label);
+  if (!match) return label;
+  return Number(match[1]) % 2 === 1 ? label : "";
 }
 
 function WalkTooltip({ active, payload, label }: any) {
