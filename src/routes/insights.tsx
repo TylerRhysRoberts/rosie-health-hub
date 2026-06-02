@@ -557,6 +557,48 @@ function InsightsPage() {
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {/* Day-of-week activity heatmap */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Day-of-Week Activity
+              </h2>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dowData} margin={{ top: 10, right: 5, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                    />
+                    <YAxis
+                      domain={[0, Math.ceil(dowMax / 15) * 15]}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={28}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      formatter={(v: any) => [`${v} min`, rangeDays === 7 ? "Walked" : "Avg"]}
+                    />
+                    <ReferenceLine
+                      y={45}
+                      stroke="#F48FB1"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                    />
+                    <Bar dataKey="minutes" radius={[6, 6, 0, 0]}>
+                      {dowData.map((d, i) => (
+                        <Cell key={i} fill={dowColor(d.minutes)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
         )}
       </div>
