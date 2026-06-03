@@ -10,7 +10,7 @@ import {
   HealthScore,
 } from "@/lib/daily-logs";
 import { SYMPTOM_OPTIONS } from "@/lib/daily-logs";
-import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck } from "lucide-react";
+import { Activity, Footprints, CalendarCheck, Flame, ShieldCheck, MapPin } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
 import {
@@ -240,9 +240,9 @@ function InsightsPage() {
             <Link
               to="/distance-covered"
               aria-label="Where has Rosie been?"
-              className="h-12 w-12 rounded-full flex items-center justify-center text-3xl leading-none active:scale-95 transition-transform"
+              className="h-12 w-12 rounded-full bg-muted flex items-center justify-center active:scale-95 transition-transform"
             >
-              🌍
+              <MapPin className="h-6 w-6 text-primary" />
             </Link>
             <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
               <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
@@ -308,7 +308,7 @@ function InsightsPage() {
               </div>
               <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                 <p className="text-[11px] text-muted-foreground">Average Flare-Up Duration</p>
-                <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
+                <p className="text-xs font-semibold text-foreground">
                   {avgFlareDuration === null ? "—" : formatFlareDuration(avgFlareDuration)}
                 </p>
               </div>
@@ -447,8 +447,6 @@ function InsightsPage() {
                     <XAxis
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
-                      interval="preserveStartEnd"
-                      minTickGap={20}
                       tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
                     />
                     <YAxis
@@ -659,10 +657,10 @@ function EmptyState() {
 }
 
 function formatFlareDuration(mins: number): string {
-  if (mins < 60) return `${mins} min`;
+  if (mins < 60) return `${mins} mins`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return `${h} hour${h === 1 ? "" : "s"} and ${m} minute${m === 1 ? "" : "s"}`;
+  return `${h} hrs and ${m} mins`;
 }
 
 function oddWeekFormatter(label: string, rangeDays: 7 | 30 | 90): string {
