@@ -148,7 +148,7 @@ function InsightsPage() {
             .filter(([, m]) => m.taken && m.is_rescue)
             .map(([n, m]) => `${n} (${m.dosage})`)
         : [];
-      const label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      const label = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
       const holiday = !!match?.holiday_mode;
       trend.push({ date: key, label, score: match ? match.health_score : null, holiday });
       walkTrend.push({
@@ -199,6 +199,19 @@ function InsightsPage() {
   const showHolidayOverlay = rangeDays !== 7;
   const trendHolidaySegments = showHolidayOverlay ? computeHolidaySegments(trend) : [];
   const walkHolidaySegments = showHolidayOverlay ? computeHolidaySegments(walkTrend) : [];
+
+  // Strict 5-tick X-axis for 30-day views (equidistant indices across the dataset)
+  const fiveTicks = (arr: { label: string }[]): string[] | undefined => {
+    if (arr.length < 2) return undefined;
+    const last = arr.length - 1;
+    const idxs = [0, 1, 2, 3, 4].map((k) => Math.round((last * k) / 4));
+    const seen = new Set<string>();
+    return idxs
+      .map((i) => arr[i]?.label)
+      .filter((l): l is string => !!l && !seen.has(l) && (seen.add(l), true));
+  };
+  const trendXTicks = rangeDays === 30 ? fiveTicks(trend) : undefined;
+  const walkXTicks = rangeDays === 30 ? fiveTicks(walkTrend) : undefined;
 
   // Day-of-week activity heatmap
   const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -448,6 +461,7 @@ function InsightsPage() {
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
                       tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
+                      {...(trendXTicks ? { ticks: trendXTicks, interval: 0 as const } : {})}
                     />
                     <YAxis
                       domain={[1, 3]}
@@ -508,6 +522,7 @@ function InsightsPage() {
                       dataKey="label"
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
                       tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
+                      {...(walkXTicks ? { ticks: walkXTicks, interval: 0 as const } : {})}
                     />
                     <YAxis
                       tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
