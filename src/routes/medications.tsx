@@ -115,8 +115,8 @@ function MedicationsPage() {
     for (const log of logs) {
       for (const [name, m] of Object.entries(log.medications || {})) {
         if (!m?.taken) continue;
-        totals[name] = (totals[name] || 0) + 1;
         if (daySet.has(log.log_date)) {
+          totals[name] = (totals[name] || 0) + DOSAGE_DECIMAL[m.dosage];
           if (!perDay[name]) perDay[name] = {};
           perDay[name][log.log_date] = { dosage: m.dosage, is_rescue: !!m.is_rescue };
         }
@@ -225,7 +225,7 @@ function MedicationsPage() {
                     {m.name}
                   </h3>
                   <span className="text-[11px] text-muted-foreground">
-                    {m.count} {m.count === 1 ? "dose" : "doses"} total
+                    {formatDoseCount(m.count)} {m.count === 1 ? "dose" : "doses"} total
                   </span>
                 </div>
 
