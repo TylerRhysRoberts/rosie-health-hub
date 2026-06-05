@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, Check, AlertTriangle, CheckCircle2, Copy, X, ChevronDown, Star, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -57,6 +57,44 @@ function LogPage() {
   const [showMoreMeds, setShowMoreMeds] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
+
+  const touchRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
+
+  const shiftDate = (delta: number) => {
+    const [y, m, d] = date.split("-").map(Number);
+    const next = new Date(y, m - 1, d);
+    next.setDate(next.getDate() + delta);
+    const ny = next.getFullYear();
+    const nm = String(next.getMonth() + 1).padStart(2, "0");
+    const nd = String(next.getDate()).padStart(2, "0");
+    const nextStr = `${ny}-${nm}-${nd}`;
+    if (delta > 0 && nextStr > todayKey()) return;
+    setDate(nextStr);
+    navigate({ to: "/app", search: { date: nextStr } });
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY, active: true };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    const s = touchRef.current;
+    if (!s || !s.active) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientY - s.y) > 30) s.active = false;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchRef.current;
+    touchRef.current = null;
+    if (!s || !s.active) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    if (Math.abs(dy) > 30) return;
+    if (Math.abs(dx) < 75) return;
+    if (dx > 0) shiftDate(-1);
+    else if (date < todayKey()) shiftDate(1);
+  };
 
   useEffect(() => {
     if (search.date && search.date !== date) setDate(search.date);
