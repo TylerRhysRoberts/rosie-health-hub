@@ -101,7 +101,7 @@ function MedicationsPage() {
     const arr: string[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const span = rangeDays === 7 ? WINDOW_DAYS : rangeDays;
+    const span = rangeDays === 7 ? 7 : rangeDays;
     for (let i = span - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
