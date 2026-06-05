@@ -411,6 +411,9 @@ function LogPage() {
       className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden transition-colors ${
         flareAccent ? "bg-[oklch(0.97_0.04_25)]" : log.holiday_mode ? "bg-[oklch(0.96_0.03_230)]" : ""
       }`}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
         <div className="flex items-center justify-between animate-fade-up-blur">
