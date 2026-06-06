@@ -704,6 +704,16 @@ function formatFlareDuration(mins: number): string {
   return `${h} hrs and ${m} mins`;
 }
 
+function safeCompletedWalks(walks: unknown): number {
+  try {
+    const arr = typeof walks === "string" ? JSON.parse(walks) : walks;
+    if (!Array.isArray(arr)) return 0;
+    return arr.filter((w: any) => w && w.completed === true).length;
+  } catch {
+    return 0;
+  }
+}
+
 function oddWeekFormatter(label: string, rangeDays: 7 | 30 | 90): string {
   if (rangeDays !== 90) return label;
   const match = /^Wk\s+(\d+)/.exec(label);
