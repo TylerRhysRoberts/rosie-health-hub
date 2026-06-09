@@ -143,6 +143,14 @@ function InsightsPage() {
     healthScore: number | null;
     holiday: boolean;
   }[] = [];
+  const dinsTrend: {
+    date: string;
+    label: string;
+    dins: number | null;
+    healthScore: number | null;
+    prompting: boolean;
+    holiday: boolean;
+  }[] = [];
 
   if (!isWeekly) {
     for (let i = rangeDays - 1; i >= 0; i--) {
@@ -173,6 +181,14 @@ function InsightsPage() {
         label,
         frequency: completedWalks,
         healthScore: match ? match.health_score : null,
+        holiday,
+      });
+      dinsTrend.push({
+        date: key,
+        label,
+        dins: match ? (match.dins_percent ?? null) : null,
+        healthScore: match ? match.health_score : null,
+        prompting: !!match?.dins_prompting,
         holiday,
       });
     }
@@ -217,6 +233,20 @@ function InsightsPage() {
         healthScore: avgS,
         holiday,
       });
+      const dinsVals = bucketLogs.map((l) => l.dins_percent ?? 0);
+      const avgD =
+        dinsVals.length > 0
+          ? Math.round(dinsVals.reduce((s, v) => s + v, 0) / dinsVals.length)
+          : null;
+      const anyPrompt = bucketLogs.some((l) => !!l.dins_prompting);
+      dinsTrend.push({
+        date: startKey,
+        label,
+        dins: avgD,
+        healthScore: avgS,
+        prompting: anyPrompt,
+        holiday,
+      });
     }
   }
   const maxWalk = Math.max(60, ...walkTrend.map((w) => w.minutes ?? 0));
@@ -237,7 +267,9 @@ function InsightsPage() {
   const trendXTicks = rangeDays === 30 ? fiveTicks(trend) : undefined;
   const walkXTicks = rangeDays === 30 ? fiveTicks(walkTrend) : undefined;
   const walkFreqXTicks = rangeDays === 30 ? fiveTicks(walkFreqTrend) : undefined;
+  const dinsXTicks = rangeDays === 30 ? fiveTicks(dinsTrend) : undefined;
   const maxFreq = Math.max(3, ...walkFreqTrend.map((w) => w.frequency ?? 0));
+  const maxDins = Math.max(100, ...dinsTrend.map((d) => d.dins ?? 0));
 
   // Day-of-week activity heatmap
   const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -509,6 +541,74 @@ function InsightsPage() {
                       type="monotone"
                       dataKey="score"
                       stroke="url(#healthScoreGradient)"
+                      strokeWidth={3}
+                      dot={false}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Dins % Eaten vs Health Score */}
+            <div className="rounded-2xl bg-card border border-border p-5">
+              <h2 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-4">
+                Dins % Eaten vs Health Score
+              </h2>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dinsTrend} margin={{ top: 10, right: 5, bottom: 0, left: 5 }}>
+                    <defs>
+                      <linearGradient id="dinsHealthGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="192">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="100%" stopColor="#ef4444" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.01 80)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      tickFormatter={(v: string) => oddWeekFormatter(v, rangeDays)}
+                      {...(dinsXTicks ? { ticks: dinsXTicks, interval: 0 as const } : {})}
+                    />
+                    <YAxis
+                      domain={[0, Math.ceil(maxDins / 25) * 25]}
+                      tick={{ fontSize: 10, fill: "oklch(0.55 0.02 80)" }}
+                      width={32}
+                      tickFormatter={(v: number) => `${v}%`}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      domain={[0.5, 3.5]}
+                      ticks={[1, 2, 3]}
+                      tick={<HealthDotTick />}
+                      width={18}
+                      tickMargin={2}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: "1px solid oklch(0.9 0.01 80)",
+                        fontSize: 12,
+                      }}
+                      content={<DinsTooltip />}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="dins"
+                      stroke="oklch(0.65 0.18 260)"
+                      strokeWidth={2}
+                      dot={<PromptingDot />}
+                      activeDot={{ r: 5 }}
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="healthScore"
+                      stroke="url(#dinsHealthGradient)"
                       strokeWidth={3}
                       dot={false}
                       connectNulls
@@ -855,6 +955,57 @@ function WalkTooltip({ active, payload, label }: any) {
           Flare: {flare.start_time ?? "?"} – {flare.end_time ?? "?"}
           {flare.symptoms?.length ? ` [${flare.symptoms.join(", ")}]` : ""}
           {flare.intervention_med ? ` · ${flare.intervention_med}` : ""}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PromptingDot(props: any) {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null || payload?.dins == null) return null;
+  if (!payload?.prompting) return null;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={5}
+      fill="#fff"
+      stroke="oklch(0.65 0.18 260)"
+      strokeWidth={2}
+    />
+  );
+}
+
+function DinsTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload ?? {};
+  const dins = p.dins;
+  const hs = p.healthScore;
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid oklch(0.9 0.01 80)",
+        background: "white",
+        padding: "8px 10px",
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="text-[11px] font-semibold text-foreground mb-1">{label}</div>
+      <div className="text-[11px]">
+        <span style={{ color: "oklch(0.65 0.18 260)" }}>● Dins:</span>{" "}
+        {dins == null ? "No log" : `${dins}%`}
+      </div>
+      {hs != null && (
+        <div className="text-[11px] text-muted-foreground">
+          Health: {Math.round(hs) === 1 ? "Poor" : Math.round(hs) === 2 ? "Neutral" : "Good"}
+        </div>
+      )}
+      {p.prompting && (
+        <div className="text-[11px] mt-1" style={{ color: "oklch(0.65 0.18 260)" }}>
+          ○ Prompting required
         </div>
       )}
     </div>
