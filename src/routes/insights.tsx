@@ -861,6 +861,31 @@ function HealthDotTick(props: any) {
   return <circle cx={(x ?? 0) + 6} cy={y ?? 0} r={4} fill={fill} />;
 }
 
+function ViewModeToggle({
+  value,
+  onChange,
+}: {
+  value: "single" | "dual";
+  onChange: (v: "single" | "dual") => void;
+}) {
+  return (
+    <div className="inline-flex shrink-0 rounded-full bg-muted p-0.5">
+      {(["single", "dual"] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onChange(m)}
+          className={`px-2.5 py-1 text-[10px] font-medium rounded-full transition-colors capitalize ${
+            value === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          {m}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function computeHolidaySegments(data: Array<{ holiday: boolean }>): Array<{ start: number; end: number }> {
   const out: Array<{ start: number; end: number }> = [];
   let start: number | null = null;
