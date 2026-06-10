@@ -95,8 +95,8 @@ function AchievementsPage() {
                   {cat}
                 </h2>
                 <div
-                  className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-5 pb-3 -mx-1 scrollbar-hide"
-                  style={{ scrollbarWidth: "none" }}
+                  className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-5 pb-3 scrollbar-hide"
+                  style={{ scrollbarWidth: "none", scrollPaddingLeft: "1.25rem" }}
                 >
                   {items.map((a) => {
                     const unlockedAt = unlockedMap.get(a.id);
