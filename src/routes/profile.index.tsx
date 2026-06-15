@@ -316,54 +316,6 @@ function ProfilePage() {
             </div>
           </Card>
 
-          {/* Medication inventory */}
-          <Card>
-            <CardHeader label="Inventory Management" />
-            <div className="space-y-4">
-              <InventoryField
-                label="Medrone"
-                value={profile.medrone_stock}
-                step={0.5}
-                threshold={profile.low_stock_threshold}
-                onChange={(value) => setProfile({ ...profile, medrone_stock: value })}
-                onBlur={() => saveProfile(profile)}
-              />
-              <InventoryField
-                label="Probiotic"
-                value={profile.probiotic_stock}
-                step={1}
-                threshold={profile.low_stock_threshold}
-                onChange={(value) => setProfile({ ...profile, probiotic_stock: value })}
-                onBlur={() => saveProfile(profile)}
-              />
-              <div className="border-t border-border pt-4">
-                <Field label="Low stock threshold">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      max="100000"
-                      step="1"
-                      value={profile.low_stock_threshold}
-                      onChange={(e) => {
-                        const value = e.currentTarget.valueAsNumber;
-                        if (Number.isFinite(value)) setProfile({ ...profile, low_stock_threshold: value });
-                      }}
-                      onBlur={() => saveProfile(profile)}
-                      aria-label="Low stock threshold in tablets"
-                      className="w-full rounded-xl border border-border bg-muted px-3.5 py-2.5 pr-20 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    />
-                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">tablets</span>
-                  </div>
-                </Field>
-              </div>
-            </div>
-            {profileSaving && (
-              <p className="mt-2 text-[10px] text-muted-foreground">Saving…</p>
-            )}
-          </Card>
-
           {/* Insurance */}
           <Card>
             <CardHeader label="Insurance" />
@@ -429,6 +381,43 @@ function ProfilePage() {
             </div>
             {profileSaving && (
               <p className="text-[10px] text-muted-foreground mt-2">Saving…</p>
+            )}
+          </Card>
+
+          {/* Medication inventory */}
+          <Card>
+            <CardHeader label="Inventory Management" />
+            <div className="space-y-4">
+              <InventoryField
+                label="Medrone"
+                value={profile.medrone_stock}
+                step={0.5}
+                threshold={profile.low_stock_threshold}
+                onChange={(value) => setProfile({ ...profile, medrone_stock: value })}
+                onBlur={(value) => saveProfile({ ...profile, medrone_stock: value })}
+              />
+              <InventoryField
+                label="Probiotic"
+                value={profile.probiotic_stock}
+                step={1}
+                threshold={profile.low_stock_threshold}
+                onChange={(value) => setProfile({ ...profile, probiotic_stock: value })}
+                onBlur={(value) => saveProfile({ ...profile, probiotic_stock: value })}
+              />
+              <div className="border-t border-border pt-4">
+                <Field label="Low stock threshold">
+                  <InventoryNumberInput
+                    value={profile.low_stock_threshold}
+                    step={1}
+                    ariaLabel="Low stock threshold in tablets"
+                    onChange={(value) => setProfile({ ...profile, low_stock_threshold: value })}
+                    onBlur={(value) => saveProfile({ ...profile, low_stock_threshold: value })}
+                  />
+                </Field>
+              </div>
+            </div>
+            {profileSaving && (
+              <p className="mt-2 text-[10px] text-muted-foreground">Saving…</p>
             )}
           </Card>
 
@@ -678,7 +667,7 @@ function InventoryField({
   step: number;
   threshold: number;
   onChange: (value: number) => void;
-  onBlur: () => void;
+  onBlur: (value: number) => void;
 }) {
   const status = getStockStatus(value, threshold);
   const statusClass = status === "In Stock"
@@ -695,24 +684,43 @@ function InventoryField({
         </label>
         <Badge variant="outline" className={statusClass}>{status}</Badge>
       </div>
-      <div className="relative">
-        <input
-          id={`inventory-${label.toLowerCase()}`}
-          type="number"
-          inputMode="decimal"
-          min="0"
-          max="100000"
-          step={step}
-          value={value}
-          onChange={(e) => {
-            const nextValue = e.currentTarget.valueAsNumber;
-            if (Number.isFinite(nextValue)) onChange(nextValue);
-          }}
-          onBlur={onBlur}
-          className="w-full rounded-xl border border-border bg-muted px-3.5 py-2.5 pr-20 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">tablets</span>
-      </div>
+      <InventoryNumberInput id={`inventory-${label.toLowerCase()}`} value={value} step={step}
+        ariaLabel={`${label} stock in tablets`} onChange={onChange} onBlur={onBlur} />
+    </div>
+  );
+}
+
+function InventoryNumberInput({ id, value, step, ariaLabel, onChange, onBlur }: {
+  id?: string;
+  value: number;
+  step: number;
+  ariaLabel: string;
+  onChange: (value: number) => void;
+  onBlur: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+
+  return (
+    <div className="relative">
+      <input id={id} type="number" inputMode="decimal" min="0" max="100000" step={step} value={draft}
+        onChange={(event) => {
+          const raw = event.currentTarget.value;
+          setDraft(raw);
+          if (raw === "") return;
+          const parsed = Number(raw);
+          if (Number.isFinite(parsed)) onChange(parsed);
+        }}
+        onBlur={() => {
+          const parsed = draft === "" ? 0 : Number(draft);
+          const nextValue = Number.isFinite(parsed) ? parsed : value;
+          setDraft(String(nextValue));
+          onChange(nextValue);
+          onBlur(nextValue);
+        }}
+        aria-label={ariaLabel}
+        className="w-full rounded-xl border border-border bg-muted px-3.5 py-2.5 pr-20 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">tablets</span>
     </div>
   );
 }
