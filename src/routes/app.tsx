@@ -544,6 +544,20 @@ function LogPage() {
       onTouchEnd={onTouchEnd}
     >
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-y-auto px-5 pt-10 pb-28">
+        {isInventoryLow(inventory) && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/15 px-3.5 py-2.5 text-warning animate-fade-up-blur">
+            <PackageX className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="text-xs leading-snug">
+              <p className="font-semibold uppercase tracking-wider">Medication stock low</p>
+              <p className="mt-0.5">
+                {[
+                  inventory.medrone_stock <= inventory.low_stock_threshold ? `Medrone ${formatTabletCount(inventory.medrone_stock)}` : null,
+                  inventory.probiotic_stock <= inventory.low_stock_threshold ? `Probiotic ${formatTabletCount(inventory.probiotic_stock)}` : null,
+                ].filter(Boolean).join(" · ")} tablets remaining.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between animate-fade-up-blur">
           <div>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Rosie Health Hub</p>
