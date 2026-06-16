@@ -169,6 +169,16 @@ function LogPage() {
       .finally(() => setMounted(true));
   }, [user, authLoading, date, navigate]);
 
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([fetchInventory(user.id), fetchLogs(user.id, 30)])
+      .then(([inv, logs]) => {
+        setInventory(inv);
+        setRecentLogs(logs);
+      })
+      .catch((err) => console.error("inventory load failed", err));
+  }, [user]);
+
   const update = <K extends keyof DailyLog>(key: K, value: DailyLog[K]) =>
     setLog((prev) => ({ ...prev, [key]: value }));
 
