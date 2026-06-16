@@ -1222,12 +1222,27 @@ function MedRow({
   med,
   setMed,
   onRemove,
+  inventoryStock,
+  avgDailyTablets: avg,
 }: {
   name: string;
   med: { taken: boolean; dosage: string; is_rescue?: boolean };
   setMed: (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => void;
   onRemove?: () => void;
+  inventoryStock?: number;
+  avgDailyTablets?: number;
 }) {
+  const showInventory = inventoryStock !== undefined;
+  const stockLabel = showInventory
+    ? (() => {
+        const count = formatTabletCount(inventoryStock!);
+        if ((avg ?? 0) > 0) {
+          const days = Math.floor(inventoryStock! / avg!);
+          return `${count} tablets (~${days} days left)`;
+        }
+        return `${count} tablets`;
+      })()
+    : null;
   return (
     <div className="px-4 py-3">
       <div className="flex items-center gap-3">
@@ -1253,8 +1268,13 @@ function MedRow({
           </button>
         )}
       </div>
-      {med.taken && (
-        <label className="mt-2 flex items-center justify-end gap-2 cursor-pointer select-none">
+      {(med.taken || showInventory) && (
+        <div className="mt-2 flex items-center justify-between gap-3">
+          {stockLabel ? (
+            <span className="text-[11px] text-muted-foreground tabular-nums">{stockLabel}</span>
+          ) : <span />}
+          {med.taken ? (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
           <span className={`text-[11px] font-semibold uppercase tracking-wider ${med.is_rescue ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}>
             Rescue dose
           </span>
@@ -1264,7 +1284,9 @@ function MedRow({
             onChange={(e) => setMed(name, { is_rescue: e.target.checked })}
             className="w-4 h-4 rounded border-border accent-[oklch(0.58_0.20_25)]"
           />
-        </label>
+            </label>
+          ) : <span />}
+        </div>
       )}
     </div>
   );
