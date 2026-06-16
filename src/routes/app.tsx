@@ -53,6 +53,11 @@ const SECONDARY_MEDS = MEDICATION_NAMES.filter(
 );
 const WALK_TARGET_MIN = 45;
 
+function formatTabletCount(n: number): string {
+  if (Number.isInteger(n)) return String(n);
+  return (Math.round(n * 10) / 10).toFixed(1);
+}
+
 function medicationInventoryUse(medications: DailyLog["medications"]) {
   const medrone = medications.Medrone;
   const probiotic = medications.Probiotic;
