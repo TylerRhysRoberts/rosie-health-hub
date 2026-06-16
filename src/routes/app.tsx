@@ -107,6 +107,8 @@ function LogPage() {
   const [showMoreMeds, setShowMoreMeds] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
+  const [inventory, setInventory] = useState<InventoryProfile>(EMPTY_INVENTORY);
+  const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
 
   const touchRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
 
