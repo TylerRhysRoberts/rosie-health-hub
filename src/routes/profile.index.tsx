@@ -1,11 +1,9 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { Badge } from "@/components/ui/badge";
 import rosieLogo from "@/assets/rosie-icon.png";
 import {
   Copy, Phone, ChevronDown, ChevronUp, Check, Trash2, Stethoscope, Trophy,
@@ -34,16 +32,7 @@ interface DogProfile {
   insurance_policy_number: string;
   insurance_renewal_date: string | null;
   emergency_vet_phone: string;
-  medrone_stock: number;
-  probiotic_stock: number;
-  low_stock_threshold: number;
 }
-
-const inventorySchema = z.object({
-  medrone_stock: z.number().finite().min(0).max(100000),
-  probiotic_stock: z.number().finite().min(0).max(100000),
-  low_stock_threshold: z.number().finite().min(0).max(100000),
-});
 
 const EMPTY_PROFILE: DogProfile = {
   microchip_number: "",
@@ -51,9 +40,6 @@ const EMPTY_PROFILE: DogProfile = {
   insurance_policy_number: "",
   insurance_renewal_date: null,
   emergency_vet_phone: "",
-  medrone_stock: 0,
-  probiotic_stock: 0,
-  low_stock_threshold: 7,
 };
 
 interface WeightEntry {
