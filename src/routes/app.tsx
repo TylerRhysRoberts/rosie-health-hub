@@ -395,7 +395,24 @@ function LogPage() {
       const saved = await upsertLog(user.id, { ...working, walks, flare_event });
       await deductLoggedMedicationStock(user.id, saved.medications, previousLog?.medications);
       setLog(saved);
-      toast.success("Log saved", { description: "Your daily entry has been recorded." });
+      // Refresh inventory + recent logs (averages will update).
+      let nextInventory = inventory;
+      try {
+        nextInventory = await fetchInventory(user.id);
+        setInventory(nextInventory);
+        const refreshed = await fetchLogs(user.id, 30);
+        setRecentLogs(refreshed);
+      } catch (e) {
+        console.error("inventory refresh failed", e);
+      }
+      const lowMeds: string[] = [];
+      if (nextInventory.medrone_stock <= nextInventory.low_stock_threshold) lowMeds.push("Medrone");
+      if (nextInventory.probiotic_stock <= nextInventory.low_stock_threshold) lowMeds.push("Probiotic");
+      const baseMessage = "Your daily entry has been recorded.";
+      const description = lowMeds.length > 0
+        ? `${baseMessage} ⚠️ Note: ${lowMeds.join(" & ")} stock is low!`
+        : baseMessage;
+      toast.success("Log saved", { description });
       // ── Lifetime achievements evaluation ────────────────────────
       try {
         // Update ambient meta counters (night log / late edit).
