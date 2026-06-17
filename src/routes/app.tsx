@@ -782,7 +782,7 @@ function LogPage() {
           )}
 
           {!log.holiday_mode && (
-          <Section label="Symptoms">
+          <Section label="Symptoms" action={<HeaderAddButton label="Add custom symptom" onClick={() => { setCustomDraft(""); setCustomDialog("symptom"); }} />}>
             <div className="grid grid-cols-3 gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
                 const active = log.symptoms.includes(s);
@@ -812,12 +812,6 @@ function LogPage() {
                   </button>
                 ))}
             </div>
-            <CustomAdd
-              value={customSymptom}
-              onChange={setCustomSymptom}
-              onAdd={addCustomSymptom}
-              placeholder="Add custom symptom…"
-            />
           </Section>
           )}
 
