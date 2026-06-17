@@ -29,6 +29,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/app")({
   component: LogPage,
@@ -105,10 +108,8 @@ function LogPage() {
   const [log, setLog] = useState<DailyLog>(emptyLog());
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [customSymptom, setCustomSymptom] = useState("");
-  const [customTreat, setCustomTreat] = useState("");
-  const [customScavenged, setCustomScavenged] = useState("");
-  const [customMed, setCustomMed] = useState("");
+  const [customDialog, setCustomDialog] = useState<null | "symptom" | "treat" | "scavenged" | "med">(null);
+  const [customDraft, setCustomDraft] = useState("");
   const [showMoreMeds, setShowMoreMeds] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ name: string; totalMiles: number; year: number } | null>(null);
@@ -211,8 +212,8 @@ function LogPage() {
     });
   };
 
-  const addCustomSymptom = () => {
-    const v = customSymptom.trim();
+  const addCustomSymptom = (raw: string) => {
+    const v = raw.trim();
     if (!v) return;
     setLog((prev) => ({
       ...prev,
@@ -220,7 +221,6 @@ function LogPage() {
         ? prev.symptoms
         : [...prev.symptoms.filter((x) => x !== "No Issues"), v],
     }));
-    setCustomSymptom("");
   };
 
   const toggleListItem = (key: "treats" | "scavenged", item: string) => {
@@ -233,13 +233,12 @@ function LogPage() {
     });
   };
 
-  const addCustomTo = (key: "treats" | "scavenged", value: string, reset: () => void) => {
+  const addCustomTo = (key: "treats" | "scavenged", value: string) => {
     const v = value.trim();
     if (!v) return;
     setLog((prev) =>
       prev[key].includes(v) ? prev : { ...prev, [key]: [...prev[key], v] },
     );
-    reset();
   };
 
   const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => {
@@ -282,15 +281,14 @@ function LogPage() {
     });
   };
 
-  const addCustomMed = () => {
-    const v = customMed.trim();
+  const addCustomMed = (raw: string) => {
+    const v = raw.trim();
     if (!v) return;
     setLog((prev) =>
       prev.medications[v]
         ? prev
         : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole", is_rescue: false } } },
     );
-    setCustomMed("");
   };
 
   const removeMed = (name: string) => {
@@ -604,7 +602,7 @@ function LogPage() {
                   value={date}
                   max={todayKey()}
                   onChange={(e) => setDate(e.target.value)}
-                  className="appearance-none [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer w-full px-4 pr-10 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="appearance-none [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <CalendarIcon className="w-5 h-5 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -784,7 +782,7 @@ function LogPage() {
           )}
 
           {!log.holiday_mode && (
-          <Section label="Symptoms">
+          <Section label="Symptoms" action={<HeaderAddButton label="Add custom symptom" onClick={() => { setCustomDraft(""); setCustomDialog("symptom"); }} />}>
             <div className="grid grid-cols-3 gap-2">
               {SYMPTOM_OPTIONS.map((s) => {
                 const active = log.symptoms.includes(s);
@@ -814,12 +812,6 @@ function LogPage() {
                   </button>
                 ))}
             </div>
-            <CustomAdd
-              value={customSymptom}
-              onChange={setCustomSymptom}
-              onAdd={addCustomSymptom}
-              placeholder="Add custom symptom…"
-            />
           </Section>
           )}
 
@@ -836,7 +828,7 @@ function LogPage() {
           )}
 
           {!log.holiday_mode && (
-          <Section label="Treats">
+          <Section label="Treats" action={<HeaderAddButton label="Add custom treat" onClick={() => { setCustomDraft(""); setCustomDialog("treat"); }} />}>
             <div className="flex flex-wrap gap-2">
               {DEFAULT_TREATS.map((t) => {
                 const active = log.treats.includes(t);
@@ -854,17 +846,11 @@ function LogPage() {
                   </Chip>
                 ))}
             </div>
-            <CustomAdd
-              value={customTreat}
-              onChange={setCustomTreat}
-              onAdd={() => addCustomTo("treats", customTreat, () => setCustomTreat(""))}
-              placeholder="Add custom treat…"
-            />
           </Section>
           )}
 
           {!log.holiday_mode && (
-          <Section label="Scavenged / Additional Food">
+          <Section label="Scavenged / Additional Food" action={<HeaderAddButton label="Add custom item" onClick={() => { setCustomDraft(""); setCustomDialog("scavenged"); }} />}>
             <div className="flex flex-wrap gap-2">
               {DEFAULT_SCAVENGED.map((t) => {
                 const active = log.scavenged.includes(t);
@@ -882,17 +868,11 @@ function LogPage() {
                   </Chip>
                 ))}
             </div>
-            <CustomAdd
-              value={customScavenged}
-              onChange={setCustomScavenged}
-              onAdd={() => addCustomTo("scavenged", customScavenged, () => setCustomScavenged(""))}
-              placeholder="Add custom item…"
-            />
           </Section>
           )}
 
           {/* 5. Care & activities */}
-          <Section label="Medications">
+          <Section label="Medications" action={<HeaderAddButton label="Add custom medication" onClick={() => { setCustomDraft(""); setCustomDialog("med"); }} />}>
             <div className="rounded-2xl bg-card border border-border divide-y divide-border overflow-hidden">
               {PRIMARY_MEDS.map((name) => {
                 const med = log.medications[name];
@@ -936,47 +916,44 @@ function LogPage() {
                 );
               })}
             </div>
-            <CustomAdd
-              value={customMed}
-              onChange={setCustomMed}
-              onAdd={addCustomMed}
-              placeholder="Add custom medication…"
-            />
           </Section>
 
-          <Section label="Location">
-            <select
-              value={log.location ?? ""}
-              onChange={(e) => update("location", e.target.value || null)}
-              className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
-            >
-              <option value="">Select location…</option>
-              {LOCATION_OPTIONS.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
-          </Section>
-
-          {!log.holiday_mode && (
-          <Section label="Routine Type">
-            <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
-              {(["routine", "non_routine"] as const).map((r) => {
-                const active = log.routine_type === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => update("routine_type", r)}
-                    className={`py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 ${
-                      active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-                    }`}
-                  >
-                    {r === "routine" ? "Routine Day (Work)" : "Non-Routine Day (Off)"}
-                  </button>
-                );
-              })}
+          <Section label="Location & Routine">
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={log.location ?? ""}
+                onChange={(e) => update("location", e.target.value || null)}
+                className="col-span-1 min-w-0 w-full px-3 py-3 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                <option value="">Location…</option>
+                {LOCATION_OPTIONS.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+              {log.holiday_mode ? (
+                <div className="col-span-2 flex items-center justify-center rounded-xl bg-muted border border-dashed border-border text-[12px] text-muted-foreground px-3 py-3">
+                  Routine paused during holiday mode
+                </div>
+              ) : (
+                <div className="col-span-2 grid grid-cols-2 gap-2 p-1 rounded-2xl bg-muted border border-border">
+                  {(["routine", "non_routine"] as const).map((r) => {
+                    const active = log.routine_type === r;
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => update("routine_type", r)}
+                        className={`py-2.5 rounded-xl text-xs font-medium transition-all active:scale-95 ${
+                          active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                        }`}
+                      >
+                        {r === "routine" ? "Routine (Work)" : "Non-Routine (Off)"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </Section>
-          )}
 
           {!log.holiday_mode && (
           <Section
@@ -1089,17 +1066,78 @@ function LogPage() {
         year={milestoneModal?.year ?? new Date().getFullYear()}
         onClose={() => setMilestoneModal(null)}
       />
+      <Dialog
+        open={customDialog !== null}
+        onOpenChange={(open) => { if (!open) setCustomDialog(null); }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {customDialog === "symptom" && "Add custom symptom"}
+              {customDialog === "treat" && "Add custom treat"}
+              {customDialog === "scavenged" && "Add custom item"}
+              {customDialog === "med" && "Add custom medication"}
+            </DialogTitle>
+          </DialogHeader>
+          <input
+            autoFocus
+            type="text"
+            value={customDraft}
+            onChange={(e) => setCustomDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const v = customDraft;
+                if (customDialog === "symptom") addCustomSymptom(v);
+                else if (customDialog === "treat") addCustomTo("treats", v);
+                else if (customDialog === "scavenged") addCustomTo("scavenged", v);
+                else if (customDialog === "med") addCustomMed(v);
+                setCustomDraft("");
+                setCustomDialog(null);
+              }
+            }}
+            placeholder="Enter name…"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <DialogFooter>
+            <button
+              onClick={() => { setCustomDraft(""); setCustomDialog(null); }}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-muted/70"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                const v = customDraft;
+                if (customDialog === "symptom") addCustomSymptom(v);
+                else if (customDialog === "treat") addCustomTo("treats", v);
+                else if (customDialog === "scavenged") addCustomTo("scavenged", v);
+                else if (customDialog === "med") addCustomMed(v);
+                setCustomDraft("");
+                setCustomDialog(null);
+              }}
+              disabled={!customDraft.trim()}
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground disabled:opacity-50"
+            >
+              Add
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <BottomNav />
     </div>
   );
 }
 
-function Section({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
+function Section({ label, hint, action, children }: { label: string; hint?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="animate-fade-up-blur">
       <div className="flex items-baseline justify-between mb-2 px-1">
         <h2 className="text-[12px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</h2>
-        {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
+        <div className="flex items-center gap-2">
+          {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
+          {action}
+        </div>
       </div>
       {children}
     </div>
@@ -1122,27 +1160,17 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-function CustomAdd({
-  value, onChange, onAdd, placeholder,
-}: { value: string; onChange: (v: string) => void; onAdd: () => void; placeholder: string }) {
+function HeaderAddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <div className="mt-2 flex gap-2">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAdd(); } }}
-        placeholder={placeholder}
-        className="flex-1 px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-      />
-      <button
-        onClick={onAdd}
-        className="px-3 rounded-xl bg-muted text-foreground text-sm font-medium hover:bg-muted/70 active:scale-95"
-        aria-label="Add"
-      >
-        <Plus className="w-4 h-4" />
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted active:scale-90 transition-all"
+    >
+      <Plus className="w-4 h-4" />
+    </button>
   );
 }
 
@@ -1246,9 +1274,16 @@ function MedRow({
       })()
     : null;
   return (
-    <div className="px-4 py-3">
+    <div className="px-4 py-2.5">
       <div className="flex items-center gap-3">
-        <span className="flex-1 text-sm font-medium text-foreground">{name}</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-foreground leading-tight">{name}</div>
+          {stockLabel && (
+            <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums leading-tight">
+              {stockLabel}
+            </div>
+          )}
+        </div>
         <select
           value={med.dosage}
           onChange={(e) => setMed(name, { dosage: e.target.value })}
@@ -1270,13 +1305,9 @@ function MedRow({
           </button>
         )}
       </div>
-      {(med.taken || showInventory) && (
-        <div className="mt-2 flex items-center justify-between gap-3">
-          {stockLabel ? (
-            <span className="text-[11px] text-muted-foreground tabular-nums">{stockLabel}</span>
-          ) : <span />}
-          {med.taken ? (
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+      {med.taken && (
+        <div className="mt-1.5 flex items-center justify-end gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
           <span className={`text-[11px] font-semibold uppercase tracking-wider ${med.is_rescue ? "text-[oklch(0.58_0.20_25)]" : "text-muted-foreground"}`}>
             Rescue dose
           </span>
@@ -1286,8 +1317,7 @@ function MedRow({
             onChange={(e) => setMed(name, { is_rescue: e.target.checked })}
             className="w-4 h-4 rounded border-border accent-[oklch(0.58_0.20_25)]"
           />
-            </label>
-          ) : <span />}
+          </label>
         </div>
       )}
     </div>
