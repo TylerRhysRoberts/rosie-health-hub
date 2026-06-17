@@ -828,7 +828,7 @@ function LogPage() {
           )}
 
           {!log.holiday_mode && (
-          <Section label="Treats">
+          <Section label="Treats" action={<HeaderAddButton label="Add custom treat" onClick={() => { setCustomDraft(""); setCustomDialog("treat"); }} />}>
             <div className="flex flex-wrap gap-2">
               {DEFAULT_TREATS.map((t) => {
                 const active = log.treats.includes(t);
@@ -846,17 +846,11 @@ function LogPage() {
                   </Chip>
                 ))}
             </div>
-            <CustomAdd
-              value={customTreat}
-              onChange={setCustomTreat}
-              onAdd={() => addCustomTo("treats", customTreat, () => setCustomTreat(""))}
-              placeholder="Add custom treat…"
-            />
           </Section>
           )}
 
           {!log.holiday_mode && (
-          <Section label="Scavenged / Additional Food">
+          <Section label="Scavenged / Additional Food" action={<HeaderAddButton label="Add custom item" onClick={() => { setCustomDraft(""); setCustomDialog("scavenged"); }} />}>
             <div className="flex flex-wrap gap-2">
               {DEFAULT_SCAVENGED.map((t) => {
                 const active = log.scavenged.includes(t);
@@ -874,12 +868,6 @@ function LogPage() {
                   </Chip>
                 ))}
             </div>
-            <CustomAdd
-              value={customScavenged}
-              onChange={setCustomScavenged}
-              onAdd={() => addCustomTo("scavenged", customScavenged, () => setCustomScavenged(""))}
-              placeholder="Add custom item…"
-            />
           </Section>
           )}
 
