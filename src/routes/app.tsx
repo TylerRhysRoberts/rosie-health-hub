@@ -1097,12 +1097,15 @@ function LogPage() {
   );
 }
 
-function Section({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
+function Section({ label, hint, action, children }: { label: string; hint?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="animate-fade-up-blur">
       <div className="flex items-baseline justify-between mb-2 px-1">
         <h2 className="text-[12px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</h2>
-        {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
+        <div className="flex items-center gap-2">
+          {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
+          {action}
+        </div>
       </div>
       {children}
     </div>
