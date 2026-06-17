@@ -212,8 +212,8 @@ function LogPage() {
     });
   };
 
-  const addCustomSymptom = () => {
-    const v = customSymptom.trim();
+  const addCustomSymptom = (raw: string) => {
+    const v = raw.trim();
     if (!v) return;
     setLog((prev) => ({
       ...prev,
@@ -221,7 +221,6 @@ function LogPage() {
         ? prev.symptoms
         : [...prev.symptoms.filter((x) => x !== "No Issues"), v],
     }));
-    setCustomSymptom("");
   };
 
   const toggleListItem = (key: "treats" | "scavenged", item: string) => {
@@ -234,13 +233,12 @@ function LogPage() {
     });
   };
 
-  const addCustomTo = (key: "treats" | "scavenged", value: string, reset: () => void) => {
+  const addCustomTo = (key: "treats" | "scavenged", value: string) => {
     const v = value.trim();
     if (!v) return;
     setLog((prev) =>
       prev[key].includes(v) ? prev : { ...prev, [key]: [...prev[key], v] },
     );
-    reset();
   };
 
   const setMed = (name: string, partial: Partial<{ taken: boolean; dosage: string; is_rescue: boolean }>) => {
@@ -283,15 +281,14 @@ function LogPage() {
     });
   };
 
-  const addCustomMed = () => {
-    const v = customMed.trim();
+  const addCustomMed = (raw: string) => {
+    const v = raw.trim();
     if (!v) return;
     setLog((prev) =>
       prev.medications[v]
         ? prev
         : { ...prev, medications: { ...prev.medications, [v]: { taken: true, dosage: "whole", is_rescue: false } } },
     );
-    setCustomMed("");
   };
 
   const removeMed = (name: string) => {
