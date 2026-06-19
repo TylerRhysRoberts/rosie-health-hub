@@ -112,6 +112,7 @@ function MedicationsPage() {
   // Build list of days within range (oldest -> newest)
   const days = useMemo(() => {
     const arr: string[] = [];
+    if (rangeDays === "calendar") return arr;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const span = rangeDays === 7 ? 7 : rangeDays;
