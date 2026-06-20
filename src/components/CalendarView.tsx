@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import {
-  DailyLog,
-  fetchLogsRange,
-  DOSAGE_LABELS,
-} from "@/lib/daily-logs";
+import { DailyLog, fetchLogsRange } from "@/lib/daily-logs";
 
 export type CalendarMetricKey =
   | "medrone"
