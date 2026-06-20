@@ -359,11 +359,11 @@ export function CalendarView({
           let bg = "transparent";
           if (c.date && hasData && intensity > 0) {
             if (def.binary) {
-              bg = "hsl(var(--destructive))";
+              bg = "var(--destructive)";
             } else {
               // Scale brand pink from ~10% (very light) to 100% (saturated)
               const pct = Math.round((0.1 + 0.9 * intensity) * 100);
-              bg = `color-mix(in srgb, hsl(var(--primary)) ${pct}%, transparent)`;
+              bg = `color-mix(in srgb, var(--primary) ${pct}%, transparent)`;
             }
           }
           const valueTextClass =
