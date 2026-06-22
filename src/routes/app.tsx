@@ -817,12 +817,26 @@ function LogPage() {
 
           {/* 4. Dietary inputs */}
           {!log.holiday_mode && (
-          <Section label="% of Dins" hint={`${log.dins_percent}%`}>
+          <Section
+            label="% of Dins"
+            action={
+              <Toggle
+                on={log.dins_percent != null}
+                onChange={(v) =>
+                  update("dins_percent", v ? (log.dins_percent ?? 100) : null)
+                }
+              />
+            }
+          >
             <DinsSlider
-              value={log.dins_percent}
+              value={log.dins_percent ?? 100}
+              active={log.dins_percent != null}
               onChange={(v) => update("dins_percent", v)}
               prompting={!!log.dins_prompting}
-              onPromptingChange={(v) => update("dins_prompting", v)}
+              onPromptingChange={(v) => {
+                update("dins_prompting", v);
+                if (log.dins_percent == null) update("dins_percent", 100);
+              }}
             />
           </Section>
           )}
