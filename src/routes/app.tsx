@@ -615,6 +615,14 @@ function LogPage() {
                 <ChevronRight className="w-5 h-5" />
               </button>
               <button
+                onClick={handleCopyYesterday}
+                className="shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground"
+                aria-label="Copy Yesterday's Inputs"
+                title="Copy Yesterday's Inputs"
+              >
+                <Copy className="w-5 h-5" />
+              </button>
+              <button
                 onClick={toggleHolidayMode}
                 className={`shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
                   log.holiday_mode
@@ -641,12 +649,6 @@ function LogPage() {
                 <AlertTriangle className="w-5 h-5" />
               </button>
             </div>
-            <button
-              onClick={handleCopyYesterday}
-              className="mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card text-sm font-medium text-foreground hover:border-primary/40 active:scale-[0.99] transition-all"
-            >
-              <Copy className="w-4 h-4" /> Copy Yesterday's Inputs
-            </button>
           </Section>
 
           {/* 2. Severity & alert flags */}
