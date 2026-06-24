@@ -587,36 +587,50 @@ function LogPage() {
 
         <div className="mt-6 space-y-5">
           {/* 1. Header & system controls */}
-          <Section label="Date">
-            <div className="flex items-center gap-2">
+          <div className="animate-fade-up-blur">
+            <h2 className="mb-2 px-1 text-sm font-semibold tracking-tight text-foreground">
+              {new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </h2>
+            <div className="grid grid-cols-6 gap-2 relative">
               <button
                 onClick={() => shiftDate(-1)}
-                className="shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground"
+                className="aspect-square w-full rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground"
                 aria-label="Previous day"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <div className="relative flex-1 min-w-0">
+              <div className="relative">
                 <input
                   type="date"
                   value={date}
                   max={todayKey()}
                   onChange={(e) => setDate(e.target.value)}
-                  className="appearance-none [-webkit-appearance:none] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground text-base text-center [&::-webkit-date-and-time-value]:text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  aria-label="Pick date"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
-                <CalendarIcon className="w-5 h-5 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <div
+                  className="aspect-square w-full rounded-xl flex items-center justify-center transition-colors border text-muted-foreground bg-card border-border pointer-events-none"
+                  aria-hidden="true"
+                >
+                  <CalendarIcon className="w-5 h-5" />
+                </div>
               </div>
               <button
                 onClick={() => shiftDate(1)}
                 disabled={date >= todayKey()}
-                className="shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
+                className="aspect-square w-full rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
                 aria-label="Next day"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
               <button
                 onClick={handleCopyYesterday}
-                className="shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground"
+                className="aspect-square w-full rounded-xl flex items-center justify-center active:scale-95 transition-colors border text-muted-foreground bg-card border-border hover:text-foreground"
                 aria-label="Copy Yesterday's Inputs"
                 title="Copy Yesterday's Inputs"
               >
@@ -624,7 +638,7 @@ function LogPage() {
               </button>
               <button
                 onClick={toggleHolidayMode}
-                className={`shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
+                className={`aspect-square w-full rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
                   log.holiday_mode
                     ? "text-[oklch(0.5_0.18_220)] bg-[oklch(0.95_0.08_220)] border-[oklch(0.78_0.10_220)]"
                     : "text-muted-foreground bg-card border-border hover:text-foreground"
@@ -637,7 +651,7 @@ function LogPage() {
               </button>
               <button
                 onClick={() => setFlareOn(!log.flare_up)}
-                className={`shrink-0 h-[46px] w-[46px] rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
+                className={`aspect-square w-full rounded-xl flex items-center justify-center active:scale-95 transition-colors border ${
                   log.flare_up
                     ? "text-[oklch(0.58_0.20_25)] bg-[oklch(0.94_0.05_25)] border-[oklch(0.68_0.20_25)]"
                     : "text-muted-foreground bg-card border-border hover:text-foreground"
@@ -649,7 +663,7 @@ function LogPage() {
                 <AlertTriangle className="w-5 h-5" />
               </button>
             </div>
-          </Section>
+          </div>
 
           {/* 2. Severity & alert flags */}
           {log.flare_up && (
