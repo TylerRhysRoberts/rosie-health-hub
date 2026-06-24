@@ -6,11 +6,13 @@ import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
   deleteLogByDate, DOSAGE_LABELS,
 } from "@/lib/daily-logs";
-import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun, StickyNote } from "lucide-react";
+import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun, StickyNote, SlidersHorizontal } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -30,12 +32,15 @@ function HistoryPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
-  const [onlyPoor, setOnlyPoor] = useState(false);
-  const [onlyNeutral, setOnlyNeutral] = useState(false);
-  const [onlyFlare, setOnlyFlare] = useState(false);
-  const [onlyHoliday, setOnlyHoliday] = useState(false);
-  const [onlyNotHome, setOnlyNotHome] = useState(false);
-  const [onlyNotes, setOnlyNotes] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [health, setHealth] = useState<Set<string>>(new Set()); // "poor" | "neutral" | "good" | "flare"
+  const [context, setContext] = useState<Set<string>>(new Set()); // "holiday" | "notes"
+  const [locationFilter, setLocationFilter] = useState<string>("");
+  const [medFilter, setMedFilter] = useState<string>("");
+  const [stool, setStool] = useState<Set<string>>(new Set());
+  const [symptoms, setSymptoms] = useState<Set<string>>(new Set());
+  const [scavenged, setScavenged] = useState<Set<string>>(new Set());
+  const [lagWindow, setLagWindow] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DailyLog | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -45,19 +50,91 @@ function HistoryPage() {
     fetchLogs(user.id, 180).then(setLogs).catch(console.error).finally(() => setMounted(true));
   }, [user, isLoading, navigate]);
 
+  const uniqueLocations = useMemo(() => {
+    const s = new Set<string>();
+    for (const l of logs) if (l.location) s.add(l.location);
+    return Array.from(s).sort();
+  }, [logs]);
+
+  const uniqueMedications = useMemo(() => {
+    const s = new Set<string>();
+    for (const l of logs)
+      for (const [name, m] of Object.entries(l.medications))
+        if (m.taken) s.add(name);
+    return Array.from(s).sort();
+  }, [logs]);
+
+  const matchesCriteria = (l: DailyLog): boolean => {
+    if (health.size > 0) {
+      const tags: string[] = [];
+      if (l.health_score === 1) tags.push("poor");
+      if (l.health_score === 2) tags.push("neutral");
+      if (l.health_score === 3) tags.push("good");
+      if (l.flare_up) tags.push("flare");
+      if (!tags.some((t) => health.has(t))) return false;
+    }
+    if (context.has("holiday") && !l.holiday_mode) return false;
+    if (context.has("notes") && !(l.notes && l.notes.trim().length > 0)) return false;
+    if (locationFilter && l.location !== locationFilter) return false;
+    if (medFilter) {
+      const m = l.medications[medFilter];
+      if (!m || !m.taken) return false;
+    }
+    if (stool.size > 0 && !(l.stool_consistency ?? []).some((s) => stool.has(s))) return false;
+    if (symptoms.size > 0 && !(l.symptoms ?? []).some((s) => symptoms.has(s))) return false;
+    if (scavenged.size > 0 && !(l.scavenged ?? []).some((s) => scavenged.has(s))) return false;
+    return true;
+  };
+
+  const anyFilterActive =
+    health.size > 0 || context.size > 0 || locationFilter || medFilter ||
+    stool.size > 0 || symptoms.size > 0 || scavenged.size > 0;
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const logsByDate = new Map(logs.map((l) => [l.log_date, l] as const));
+
+    let dateMatcher: (l: DailyLog) => boolean;
+    if (lagWindow && anyFilterActive) {
+      const baselineDates = new Set(logs.filter(matchesCriteria).map((l) => l.log_date));
+      const targetDates = new Set<string>();
+      for (const d of baselineDates) {
+        const [y, m, day] = d.split("-").map(Number);
+        for (const offset of [1, 2]) {
+          const dt = new Date(y, m - 1, day + offset);
+          const yy = dt.getFullYear();
+          const mm = String(dt.getMonth() + 1).padStart(2, "0");
+          const dd = String(dt.getDate()).padStart(2, "0");
+          targetDates.add(`${yy}-${mm}-${dd}`);
+        }
+      }
+      dateMatcher = (l) => targetDates.has(l.log_date);
+    } else {
+      dateMatcher = matchesCriteria;
+    }
+
     return logs.filter((l) => {
-      if (onlyPoor && l.health_score !== 1) return false;
-      if (onlyNeutral && l.health_score !== 2) return false;
-      if (onlyFlare && !l.flare_up) return false;
-      if (onlyHoliday && !l.holiday_mode) return false;
-      if (onlyNotHome && !(l.location && l.location !== "Home")) return false;
-      if (onlyNotes && !(l.notes && l.notes.trim().length > 0)) return false;
+      if (!dateMatcher(l)) return false;
       if (q && !(l.notes || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [logs, query, onlyPoor, onlyNeutral, onlyFlare, onlyHoliday, onlyNotHome, onlyNotes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs, query, health, context, locationFilter, medFilter, stool, symptoms, scavenged, lagWindow]);
+
+  const clearAll = () => {
+    setHealth(new Set());
+    setContext(new Set());
+    setLocationFilter("");
+    setMedFilter("");
+    setStool(new Set());
+    setSymptoms(new Set());
+    setScavenged(new Set());
+    setLagWindow(false);
+  };
+
+  const activeFilterCount =
+    health.size + context.size + (locationFilter ? 1 : 0) + (medFilter ? 1 : 0) +
+    stool.size + symptoms.size + scavenged.size + (lagWindow ? 1 : 0);
 
   const handleExport = () => {
     const csv = logsToCsv(logs);
@@ -114,29 +191,29 @@ function HistoryPage() {
 
         {/* Search + filters */}
         <div className="mt-5 space-y-2 animate-fade-up-blur">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search notes…"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <FilterToggle on={onlyPoor} onClick={() => setOnlyPoor((v) => !v)}>Poor</FilterToggle>
-            <FilterToggle on={onlyNeutral} onClick={() => setOnlyNeutral((v) => !v)}>Neutral</FilterToggle>
-            <FilterToggle on={onlyFlare} onClick={() => setOnlyFlare((v) => !v)}>Flare-Up</FilterToggle>
-            <FilterToggle
-              on={onlyHoliday}
-              onClick={() => setOnlyHoliday((v) => !v)}
-              activeClass="bg-[oklch(0.92_0.05_230)] text-[oklch(0.35_0.10_230)] border-[oklch(0.78_0.08_230)]"
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search notes…"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              className="relative inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-card border border-border rounded-xl px-3 py-2.5 hover:border-primary/40 active:scale-95"
             >
-              Holiday
-            </FilterToggle>
-            <FilterToggle on={onlyNotHome} onClick={() => setOnlyNotHome((v) => !v)}>Not Home</FilterToggle>
-            <FilterToggle on={onlyNotes} onClick={() => setOnlyNotes((v) => !v)}>Notes</FilterToggle>
+              <SlidersHorizontal className="w-4 h-4" /> Filter
+              {activeFilterCount > 0 && (
+                <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] rounded-full bg-primary text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -164,6 +241,22 @@ function HistoryPage() {
           </ul>
         )}
       </div>
+
+      <FilterDrawer
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        health={health} setHealth={setHealth}
+        context={context} setContext={setContext}
+        locationFilter={locationFilter} setLocationFilter={setLocationFilter}
+        medFilter={medFilter} setMedFilter={setMedFilter}
+        stool={stool} setStool={setStool}
+        symptoms={symptoms} setSymptoms={setSymptoms}
+        scavenged={scavenged} setScavenged={setScavenged}
+        lagWindow={lagWindow} setLagWindow={setLagWindow}
+        uniqueLocations={uniqueLocations}
+        uniqueMedications={uniqueMedications}
+        onClear={clearAll}
+      />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
