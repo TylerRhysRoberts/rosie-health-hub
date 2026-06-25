@@ -8,7 +8,7 @@ import {
   DosageSize,
   FlareEvent,
 } from "@/lib/daily-logs";
-import { Pill, CalendarDays, Package, X } from "lucide-react";
+import { Pill, CalendarDays, Package } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
 import { InventoryConfig } from "@/components/InventoryConfig";
