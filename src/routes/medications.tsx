@@ -8,11 +8,17 @@ import {
   DosageSize,
   FlareEvent,
 } from "@/lib/daily-logs";
-import { Pill, ChevronDown, CalendarDays } from "lucide-react";
+import { Pill, CalendarDays, Package } from "lucide-react";
 import rosieLogo from "@/assets/rosie-icon.png";
 import { BottomNav } from "@/components/BottomNav";
 import { InventoryConfig } from "@/components/InventoryConfig";
 import { CalendarView } from "@/components/CalendarView";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   EMPTY_INVENTORY,
   InventoryProfile,
@@ -203,9 +209,26 @@ function MedicationsPage() {
               Medications
             </h1>
           </div>
-          <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
-            <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {user && (
+              <button
+                type="button"
+                onClick={() => setInventoryOpen(true)}
+                aria-label="Open medication inventory"
+                className={`relative h-10 w-10 rounded-full flex items-center justify-center border border-border bg-muted text-foreground active:scale-95 transition-transform ${
+                  isInventoryLow(inventory) ? "text-warning border-warning/40" : ""
+                }`}
+              >
+                <Package className="w-5 h-5" />
+                {isInventoryLow(inventory) && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-warning border-2 border-background" />
+                )}
+              </button>
+            )}
+            <Link to="/profile" aria-label="Open Rosie's profile" className="active:scale-95 transition-transform">
+              <img src={rosieLogo} alt="Rosie" className="h-12 w-12 rounded-full object-cover" />
+            </Link>
+          </div>
         </div>
 
         {/* Range filter - scrolls natively */}
@@ -238,34 +261,6 @@ function MedicationsPage() {
             </button>
           </div>
         </div>
-
-        {/* Inventory banner + collapsible config */}
-        {user && (
-          <div className="mb-3">
-            <button
-              type="button"
-              onClick={() => setInventoryOpen((v) => !v)}
-              aria-expanded={inventoryOpen}
-              className={`w-full flex items-center justify-between gap-3 rounded-full px-4 py-2.5 text-sm font-semibold tracking-wide uppercase transition-colors ${
-                isInventoryLow(inventory)
-                  ? "bg-destructive text-destructive-foreground"
-                  : "bg-primary text-primary-foreground"
-              }`}
-            >
-              <span>View Inventory</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${inventoryOpen ? "rotate-180" : ""}`} />
-            </button>
-            {inventoryOpen && (
-              <div className="mt-2 rounded-2xl bg-primary/15 border border-primary/30 p-4 animate-fade-up-blur">
-                <InventoryConfig
-                  userId={user.id}
-                  inventory={inventory}
-                  onChange={setInventory}
-                />
-              </div>
-            )}
-          </div>
-        )}
 
         {rangeDays === "calendar" ? (
           user ? (
@@ -319,6 +314,25 @@ function MedicationsPage() {
         )}
       </div>
       <BottomNav />
+      {user && (
+        <Sheet open={inventoryOpen} onOpenChange={setInventoryOpen}>
+          <SheetContent
+            side="bottom"
+            className="rounded-t-2xl max-h-[85vh] overflow-y-auto bg-background p-0"
+          >
+            <SheetHeader className="border-b border-border px-5 py-4 text-left">
+              <SheetTitle className="text-base font-semibold text-foreground">Medication Inventory</SheetTitle>
+            </SheetHeader>
+            <div className="p-5">
+              <InventoryConfig
+                userId={user.id}
+                inventory={inventory}
+                onChange={setInventory}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
