@@ -8,10 +8,13 @@ import {
   getStockStatus,
 } from "@/lib/inventory";
 
+const numField = z.number().finite().min(0).max(100000);
 const inventorySchema = z.object({
-  medrone_stock: z.number().finite().min(0).max(100000),
-  probiotic_stock: z.number().finite().min(0).max(100000),
-  low_stock_threshold: z.number().finite().min(0).max(100000),
+  medrone_stock: numField,
+  probiotic_stock: numField,
+  low_stock_threshold: numField,
+  medrone_threshold: numField,
+  probiotic_threshold: numField,
 });
 
 interface Props {
@@ -46,39 +49,31 @@ export function InventoryConfig({ userId, inventory, onChange }: Props) {
         label="Medrone"
         value={inventory.medrone_stock}
         step={0.5}
-        threshold={inventory.low_stock_threshold}
+        threshold={inventory.medrone_threshold}
         onLocalChange={(v) => onChange({ ...inventory, medrone_stock: v })}
         onCommit={(v) => save({ ...inventory, medrone_stock: v })}
+        onThresholdLocalChange={(v) => onChange({ ...inventory, medrone_threshold: v })}
+        onThresholdCommit={(v) => save({ ...inventory, medrone_threshold: v })}
       />
       <InventoryField
         label="Probiotic"
         value={inventory.probiotic_stock}
         step={1}
-        threshold={inventory.low_stock_threshold}
+        threshold={inventory.probiotic_threshold}
         onLocalChange={(v) => onChange({ ...inventory, probiotic_stock: v })}
         onCommit={(v) => save({ ...inventory, probiotic_stock: v })}
+        onThresholdLocalChange={(v) => onChange({ ...inventory, probiotic_threshold: v })}
+        onThresholdCommit={(v) => save({ ...inventory, probiotic_threshold: v })}
       />
-      <div className="border-t border-border/60 pt-4">
-        <label className="block text-[10px] uppercase tracking-wider text-foreground/70 mb-1">
-          Low stock threshold
-        </label>
-        <InventoryNumberInput
-          value={inventory.low_stock_threshold}
-          step={1}
-          ariaLabel="Low stock threshold in tablets"
-          onLocalChange={(v) => onChange({ ...inventory, low_stock_threshold: v })}
-          onCommit={(v) => save({ ...inventory, low_stock_threshold: v })}
-        />
-      </div>
       {saving && (
-        <p className="text-[10px] text-foreground/70">Saving…</p>
+        <p className="text-[10px] text-muted-foreground">Saving…</p>
       )}
     </div>
   );
 }
 
 function InventoryField({
-  label, value, step, threshold, onLocalChange, onCommit,
+  label, value, step, threshold, onLocalChange, onCommit, onThresholdLocalChange, onThresholdCommit,
 }: {
   label: string;
   value: number;
@@ -86,28 +81,47 @@ function InventoryField({
   threshold: number;
   onLocalChange: (v: number) => void;
   onCommit: (v: number) => void;
+  onThresholdLocalChange: (v: number) => void;
+  onThresholdCommit: (v: number) => void;
 }) {
   const status = getStockStatus(value, threshold);
   const statusClass = status === "In Stock"
-    ? "border-success/30 bg-success/15 text-success"
+    ? "border-border bg-muted text-foreground"
     : status === "Low Stock"
-      ? "border-warning/40 bg-warning/20 text-warning"
+      ? "border-warning/40 bg-warning/15 text-warning"
       : "border-destructive/40 bg-destructive/15 text-destructive";
   const id = `inventory-${label.toLowerCase()}`;
+  const thresholdId = `${id}-threshold`;
   return (
-    <div>
-      <div className="mb-1.5 flex items-center justify-between gap-3">
-        <label className="text-xs font-medium text-foreground" htmlFor={id}>{label}</label>
+    <div className="rounded-2xl border border-border bg-muted/40 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <label className="text-sm font-medium text-foreground" htmlFor={id}>{label}</label>
         <Badge variant="outline" className={statusClass}>{status}</Badge>
       </div>
-      <InventoryNumberInput
-        id={id}
-        value={value}
-        step={step}
-        ariaLabel={`${label} stock in tablets`}
-        onLocalChange={onLocalChange}
-        onCommit={onCommit}
-      />
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label htmlFor={id} className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">In stock</label>
+          <InventoryNumberInput
+            id={id}
+            value={value}
+            step={step}
+            ariaLabel={`${label} stock in tablets`}
+            onLocalChange={onLocalChange}
+            onCommit={onCommit}
+          />
+        </div>
+        <div>
+          <label htmlFor={thresholdId} className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Low alert at</label>
+          <InventoryNumberInput
+            id={thresholdId}
+            value={threshold}
+            step={1}
+            ariaLabel={`${label} low stock threshold in tablets`}
+            onLocalChange={onThresholdLocalChange}
+            onCommit={onThresholdCommit}
+          />
+        </div>
+      </div>
     </div>
   );
 }
