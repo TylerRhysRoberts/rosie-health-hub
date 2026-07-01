@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DailyLog, fetchLogs, SCORE_META, formatDate, totalWalkMinutes, logsToCsv,
-  deleteLogByDate, DOSAGE_LABELS,
+  deleteLogByDate, DOSAGE_LABELS, DEFAULT_TREATS,
 } from "@/lib/daily-logs";
 import { CalendarDays, Search, AlertTriangle, Download, X, ChevronDown, ChevronUp, ArrowRight, Sun, StickyNote, SlidersHorizontal } from "lucide-react";
 import {
