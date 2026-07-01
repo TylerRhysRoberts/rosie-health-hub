@@ -608,6 +608,14 @@ function FilterDrawer(p: FilterDrawerProps) {
             ))}
           </FilterGroup>
 
+          <FilterGroup label="Treats">
+            {p.uniqueTreats.map((t) => (
+              <PillToggle key={t} on={p.treats.has(t)} onClick={() => toggle(p.treats, t, p.setTreats)}>
+                {t}
+              </PillToggle>
+            ))}
+          </FilterGroup>
+
           <div className="flex items-start justify-between gap-3 pt-2 border-t border-border">
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground">+1–2 Days Lag Window</p>
