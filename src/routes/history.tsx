@@ -133,7 +133,7 @@ function HistoryPage() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logs, query, health, context, locationFilter, medFilter, stool, symptoms, scavenged, lagWindow]);
+  }, [logs, query, health, context, locationFilter, medFilter, stool, symptoms, scavenged, treats, lagWindow]);
 
   const clearAll = () => {
     setHealth(new Set());
