@@ -65,6 +65,12 @@ function HistoryPage() {
     return Array.from(s).sort();
   }, [logs]);
 
+  const uniqueTreats = useMemo(() => {
+    const s = new Set<string>(DEFAULT_TREATS);
+    for (const l of logs) for (const t of l.treats) if (t) s.add(t);
+    return Array.from(s).sort();
+  }, [logs]);
+
   const matchesCriteria = (l: DailyLog): boolean => {
     if (health.size > 0) {
       const tags: string[] = [];
